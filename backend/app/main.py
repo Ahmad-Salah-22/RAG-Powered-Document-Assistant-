@@ -1,3 +1,12 @@
+import os
+import sys
+
+# Ensure backend root directory is in sys.path
+_current_dir = os.path.dirname(os.path.abspath(__file__))  # .../backend/app
+_backend_dir = os.path.dirname(_current_dir)               # .../backend
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +16,7 @@ from app.core.config import settings
 from app.utils.logging_config import logger
 from app.services.retrieval import load_embedding_model, get_chroma_collection
 from app.api.routes.query import router as query_router
+from app.api.routes.documents import router as documents_router
 
 
 @asynccontextmanager
@@ -69,8 +79,9 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An unexpected internal server error occurred."}
     )
 
-# Include Query API Router
+# Include API Routers
 app.include_router(query_router)
+app.include_router(documents_router)
 
 
 @app.get("/", include_in_schema=False)

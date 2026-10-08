@@ -6,15 +6,16 @@ A complete, production-grade **Retrieval-Augmented Generation (RAG) Document Ass
 
 ## 🌟 Key Features
 
-- **Document Extraction & Cleaning**: PyPDF parser for page-by-page extraction, character statistics, and failed parsing/OCR detection.
+- **Document Extraction & Dynamic Ingestion**: Multi-format parser for PDF, TXT, and Markdown files supporting both batch ingestion and real-time drag-and-drop file upload.
 - **Semantic Chunking**: Overlapping text chunker (default size `800`, overlap `150`) preserving document title, page numbers, and chunk IDs.
 - **Dense Vector Embeddings**: Local SentenceTransformer model (`all-MiniLM-L6-v2`) generating 384-dimensional dense semantic representations.
 - **Persistent Vector Database**: ChromaDB vector store persisting vector indices, documents, and page metadata to disk (`backend/data/vector_store/`).
-- **Context Retrieval**: Similarity search with cosine distance metric returning top-K relevant chunks and source citations.
-- **Grounded LLM Generation**: Integration with local Ollama LLMs (e.g. `llama3:8b`, `mistral`, `gemma2`) with strict prompt constraints prohibiting hallucinated facts.
-- **FastAPI Lifespan Caching**: Backend loads vector stores and embedding models ONCE into memory at application startup.
-- **Interactive Streamlit Web UI**: Glassmorphism chat UI featuring live health diagnostics, question history, spinner loading states, answer display, and clickable source citations.
-- **Automated Test Suite**: Pytest test suite covering valid query flows, HTTP 422 input validation, and health checks.
+- **Context Retrieval with Target Filtering**: Similarity search with cosine distance metric, customizable Top-K chunks (1-12), minimum confidence cutoff, and document-specific filtering (`document_filter`).
+- **Multi-Persona LLM Generation**: Integration with local Ollama LLMs (e.g. `llama3:8b`, `mistral`, `gemma2`) with selectable personas (Academic & Formal, Ultra-Concise, Tutorial Breakdown, Executive Summary).
+- **Conversational Memory**: Multi-turn chat context support enabling intuitive follow-up questions and conversational coherence.
+- **Intelligent Offline Fallback**: Direct extractive grounded synthesis engine ensuring reliable demo operation even if local Ollama daemon is offline.
+- **Interactive 4-Tab Streamlit Studio Pro**: Cyber-glassmorphism dark UI featuring real-time token streaming, rich citation cards with confidence meters, categorized prompt library, 1-click demo dataset loader, pipeline optimization presets, session latency trend analytics, and Markdown/JSON export.
+- **Automated Test Suite**: 11 comprehensive Pytest test cases covering valid query flows, input validation, document uploads, deletions, and health checks.
 - **Docker & Compose Ready**: Containerized backend and frontend with Docker Compose support.
 
 ---
@@ -248,6 +249,31 @@ curl -X POST "http://localhost:8000/query" \
      -H "Content-Type: application/json" \
      -d '{"question": "What are the core pillars of OOP?"}'
 ```
+
+### `GET /documents`
+Returns all indexed documents with page count, chunk count, characters, and file size.
+
+---
+
+### `POST /documents/upload`
+Uploads a document (PDF, TXT, MD) via multipart form data and immediately embeds it into ChromaDB.
+
+**Request:** `multipart/form-data` with `file=@document.pdf`
+
+---
+
+### `DELETE /documents/{document_name}`
+Removes a document and all its indexed chunks from ChromaDB and disk.
+
+---
+
+### `POST /documents/reindex`
+Rebuilds the entire ChromaDB collection from all files in `data/raw`.
+
+---
+
+### `GET /documents/analytics/summary`
+Returns detailed analytics on vector storage, chunk distribution, and connected LLM runtime.
 
 ---
 

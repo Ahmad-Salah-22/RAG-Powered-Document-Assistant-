@@ -120,16 +120,17 @@ STRICT GROUNDING RULES:
 
 ---
 
-### Slide 7: User Interface & Diagnostics
+### Slide 7: User Interface & Diagnostics Studio Pro
 
+- **4-Tab Cyber-Glassmorphism Workspace:**
+  - 💬 **Intelligent Assistant:** Multi-turn conversational chat with live token streaming, categorized prompt library, rich citation cards with match confidence gauges, copy action bar, user feedback (👍/👎), and Markdown + JSON export.
+  - 📁 **Document Library & Dynamic Ingestion:** Real-time drag-and-drop file uploader (PDF, TXT, MD) with multi-stage progress bar, 1-click demo coursework loader (3 PDFs), document metadata drilldown inspector, single-file deletion, and full corpus re-indexing.
+  - ⚙️ **RAG Studio & Pipeline Tuning:** 1-click optimization presets (Precision, Balanced, Deep Research, Quick-Fire), Top-K slider, cosine cutoff guide, target document scoping with Select All / Clear, model selection, and live system prompt template inspector.
+  - 📊 **Analytics & Performance:** Session latency trend area charts (Retrieval vs Generation), KPI summary cards, chunk distribution chart per document, character volume metrics, and system runtime architecture matrix.
 - **Real-Time Sidebar Diagnostics:**
-  - 🟢 **Backend API Status**: Online / Offline
-  - 🟢 **Vector Store Status**: Active chunk count tracking
-  - 🟢 **Ollama Daemon Status**: Model availability check
-- **Interactive Features:**
-  - One-click sample query buttons
-  - Glassmorphism response cards with loading spinners
-  - Expandable **Source Citations** accordion showing exact text snippets and page numbers.
+  - 🟢 **Backend API Status**: Online / Offline monitoring with live roundtrip ping (ms).
+  - 🟢 **Vector Store Status**: Active chunk tracking & persistence path inspection.
+  - 🟢 **Ollama Engine Status**: Live health ping + automatic offline fallback synthesis.
 
 ---
 
@@ -153,10 +154,11 @@ Evaluation performed across 10 test queries (stored in `evaluation/evaluation_re
 
 ### Slide 9: Key Technical Innovations
 
-1. **100% Local & Privacy-Preserving:** No cloud APIs required; zero data leakage.
-2. **Zero-Hallucination Guarantee:** Enforced system prompt constraints + distance evaluation.
-3. **Page-Level Transparency:** Users can verify every answer against original PDF pages.
-4. **Production-Ready Architecture:** Clean separation of concerns (Ingestion, Retrieval, Generation, API, UI).
+1. **Dynamic Multi-Format Ingestion:** On-the-fly parsing & embedding of PDF, TXT, and Markdown files with zero server restart required.
+2. **Multi-Turn Conversational Memory:** Coherent dialogue tracking enabling follow-up questions while preserving strict document grounding.
+3. **Resilient Dual-Engine Generation:** High-fidelity Ollama local LLM synthesis paired with an intelligent offline extractive fallback engine.
+4. **Targeted Vector Retrieval:** Document-level filtering and configurable similarity thresholds to eliminate out-of-context noise.
+5. **100% Local & Auditable:** Zero cloud API leakage, full page-level citation transparency, and comprehensive automated test suite (11 passing tests).
 
 ---
 

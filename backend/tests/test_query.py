@@ -28,6 +28,7 @@ def test_health_check_endpoint(mock_app_state):
         assert "status" in data
         assert "vector_db_loaded" in data
         assert "ollama_available" in data
+        assert "active_documents" in data
 
 
 def test_query_invalid_empty_input(mock_app_state):
@@ -54,16 +55,22 @@ def test_query_valid_request(mock_retrieve, mock_generate, mock_app_state):
     """Test POST /query with valid prompt returns grounded answer and cited sources."""
     mock_retrieve.return_value = (
         "Hash tables provide average O(1) time complexity.",
-        [SourceItem(document="cs_data_structures.pdf", page=2, snippet="Hash tables map keys to values", score=0.12)]
+        [SourceItem(document="cs_data_structures.pdf", page=2, snippet="Hash tables map keys to values", score=0.12, confidence_percent=88.0)]
     )
 
     mock_generate.return_value = (
         "Hash tables map keys to values with O(1) average lookup time [cs_data_structures.pdf, Page 2].",
-        True
+        True,
+        False
     )
 
     with TestClient(app) as client:
-        payload = {"question": "What is the complexity of a hash table?"}
+        payload = {
+            "question": "What is the complexity of a hash table?",
+            "top_k": 3,
+            "document_filter": ["cs_data_structures.pdf"],
+            "system_prompt_mode": "concise"
+        }
         response = client.post("/query", json=payload)
 
         assert response.status_code == 200
@@ -74,6 +81,8 @@ def test_query_valid_request(mock_retrieve, mock_generate, mock_app_state):
         assert data["sources"][0]["document"] == "cs_data_structures.pdf"
         assert data["sources"][0]["page"] == 2
         assert "O(1)" in data["answer"]
+        assert "latency_ms" in data
+        assert "retrieval_latency_ms" in data
 
 
 @patch("app.api.routes.query.retrieve_context")
@@ -89,4 +98,3 @@ def test_query_no_context_found(mock_retrieve, mock_app_state):
         data = response.json()
         assert "could not find relevant information" in data["answer"].lower()
         assert len(data["sources"]) == 0
-

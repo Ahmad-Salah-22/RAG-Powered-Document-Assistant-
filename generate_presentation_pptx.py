@@ -242,7 +242,7 @@ def create_presentation():
         ("Backend API", "FastAPI, Uvicorn, Pydantic", "REST endpoints (/health, /query), Lifespan startup caching"),
         ("Dense Vector Store", "ChromaDB, SentenceTransformers", "384d dense embeddings (all-MiniLM-L6-v2), Cosine distance metric"),
         ("Local LLM Engine", "Ollama (llama3:8b)", "Grounded prompt execution with low temperature (0.1) for zero hallucination"),
-        ("Frontend UI", "Streamlit, Glassmorphism CSS", "Diagnostic sidebar, chat history, collapsible source citation accordion"),
+        ("Frontend UI", "Streamlit Studio Pro, Glassmorphism CSS", "Token streaming, citation cards with confidence meters, prompt library, presets, latency charts"),
         ("DevOps & Testing", "Pytest, Docker, Compose", "Automated API unit test suite and containerized deployment")
     ]
 
@@ -397,10 +397,10 @@ def create_presentation():
     add_header(s8, "Key Technical Innovations & System Highlights")
 
     innovations = [
-        ("🔒 100% Local & Private", "Zero cloud API dependencies. Embedding generation and LLM execution run completely offline locally."),
-        ("🎯 Grounded & Verifiable", "Page-level source citations allow users to verify every sentence against original source PDFs."),
-        ("🛡️ Robust Guardrails", "Dual-layer fallback protection prevents hallucinations on ungrounded or off-topic queries."),
-        ("⚡ High Performance", "FastAPI lifespan caching loads vector models into memory ONCE for instant query processing.")
+        ("📁 Dynamic Multi-Format Ingestion", "On-the-fly parsing & embedding of PDF, TXT, and Markdown files with zero server restart required."),
+        ("🎯 Grounded & Verifiable Citations", "Page-level source citations and confidence meters allow users to audit and verify every response."),
+        ("🛡️ Dual-Engine Offline Fallback", "High-fidelity Ollama LLM execution paired with an intelligent extractive fallback if offline."),
+        ("⚡ 4-Tab Glassmorphism Studio Pro", "Full workspace with real-time token streaming, prompt library, demo loader, presets, and latency analytics.")
     ]
 
     for i, (title, desc) in enumerate(innovations):
