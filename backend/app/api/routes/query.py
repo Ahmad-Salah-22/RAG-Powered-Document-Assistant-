@@ -1,8 +1,16 @@
 import time
 from fastapi import APIRouter, HTTPException, Request, status
-from app.schemas.query import QueryRequest, QueryResponse, HealthResponse, SourceItem
+from app.schemas.query import (
+    QueryRequest,
+    QueryResponse,
+    HealthResponse,
+    SourceItem,
+    CompareDocumentsRequest,
+    CompareDocumentsResponse
+)
 from app.services.retrieval import retrieve_context, get_indexed_documents_stats
 from app.services.generation import generate_grounded_answer, check_ollama_availability
+from app.services.agentic_rag import execute_agentic_rag, execute_multi_document_comparison
 from app.utils.logging_config import logger
 from app.core.config import settings
 
@@ -48,10 +56,11 @@ async def query_documents(payload: QueryRequest, request: Request):
     """Processes user question through the RAG retrieval and LLM generation pipeline."""
     start_total = time.perf_counter()
     question = payload.question
-    logger.info(f"Received query request: '{question}' (mode={payload.system_prompt_mode}, top_k={payload.top_k})")
+    logger.info(f"Received query request: '{question}' (mode={payload.system_prompt_mode}, top_k={payload.top_k}, agentic={payload.agentic_mode})")
 
     collection = getattr(request.app.state, "chroma_collection", None)
     embedding_model = getattr(request.app.state, "embedding_model", None)
+    reranker_model = getattr(request.app.state, "reranker_model", None)
 
     if collection is None or embedding_model is None:
         logger.error("Vector store or embedding model not initialized in app.state.")
@@ -66,9 +75,48 @@ async def query_documents(payload: QueryRequest, request: Request):
     retrieval_mode = payload.retrieval_mode or getattr(settings, "DEFAULT_RETRIEVAL_MODE", "hybrid")
     enable_reranker = payload.enable_reranker if payload.enable_reranker is not None else getattr(settings, "ENABLE_RERANKER", False)
     query_expansion = bool(payload.query_expansion)
-    reranker_model = getattr(request.app.state, "reranker_model", None)
 
-    # Step 1: Retrieval
+    # Convert chat history if present
+    chat_history_list = None
+    if payload.chat_history:
+        chat_history_list = [t.model_dump() for t in payload.chat_history]
+
+    # Branch: Agentic Reasoning Mode (CRAG + Multi-hop Decomposition)
+    if payload.agentic_mode:
+        logger.info(f"Engaging Agentic RAG Pipeline for query: '{question}'")
+        agentic_result = await execute_agentic_rag(
+            question=question,
+            collection=collection,
+            embedding_model=embedding_model,
+            top_k=top_k,
+            document_filter=payload.document_filter,
+            similarity_threshold=payload.similarity_threshold,
+            retrieval_mode=retrieval_mode,
+            reranker_model=reranker_model,
+            enable_reranker=enable_reranker,
+            system_prompt_mode=payload.system_prompt_mode or "academic",
+            chat_history=chat_history_list,
+            ollama_host=settings.OLLAMA_HOST,
+            ollama_model=model_name
+        )
+
+        return QueryResponse(
+            answer=agentic_result["answer"],
+            sources=agentic_result["sources"],
+            model_used=agentic_result["model_used"],
+            latency_ms=agentic_result["latency_ms"],
+            retrieval_latency_ms=agentic_result["retrieval_latency_ms"],
+            generation_latency_ms=agentic_result["generation_latency_ms"],
+            fallback_used=agentic_result["fallback_used"],
+            retrieval_mode=retrieval_mode,
+            reranker_used=enable_reranker,
+            agentic_active=True,
+            intent_type=agentic_result["intent_type"],
+            confidence_score=agentic_result["confidence_score"],
+            reasoning_steps=agentic_result["reasoning_steps"]
+        )
+
+    # Standard Retrieval pipeline
     start_retrieval = time.perf_counter()
     context, sources = retrieve_context(
         query=question,
@@ -98,15 +146,11 @@ async def query_documents(payload: QueryRequest, request: Request):
             generation_latency_ms=0.0,
             fallback_used=False,
             retrieval_mode=retrieval_mode,
-            reranker_used=reranker_applied
+            reranker_used=reranker_applied,
+            agentic_active=False
         )
 
-    # Convert chat history if present
-    chat_history_list = None
-    if payload.chat_history:
-        chat_history_list = [t.model_dump() for t in payload.chat_history]
-
-    # Step 2: Generation via Ollama (or smart grounded fallback)
+    # Generation via Ollama (or smart grounded fallback)
     start_gen = time.perf_counter()
     answer, success, fallback_used = await generate_grounded_answer(
         question=question,
@@ -130,5 +174,49 @@ async def query_documents(payload: QueryRequest, request: Request):
         generation_latency_ms=round(generation_latency, 2),
         fallback_used=fallback_used,
         retrieval_mode=retrieval_mode,
-        reranker_used=reranker_applied
+        reranker_used=reranker_applied,
+        agentic_active=False
+    )
+
+
+@router.post(
+    "/query/compare",
+    response_model=CompareDocumentsResponse,
+    summary="Multi-Document Comparative Analysis",
+    description="Performs automated side-by-side comparative analysis of two documents on a selected topic."
+)
+async def compare_documents_route(payload: CompareDocumentsRequest, request: Request):
+    """Executes comparative analysis and returns a markdown comparison matrix."""
+    collection = getattr(request.app.state, "chroma_collection", None)
+    embedding_model = getattr(request.app.state, "embedding_model", None)
+    reranker_model = getattr(request.app.state, "reranker_model", None)
+
+    if collection is None or embedding_model is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Vector store or embedding model not initialized."
+        )
+
+    model_name = payload.model or settings.OLLAMA_MODEL
+
+    result = await execute_multi_document_comparison(
+        doc_a=payload.doc_a,
+        doc_b=payload.doc_b,
+        topic=payload.comparison_topic or "Core concepts, algorithms, complexity trade-offs, and practical use cases",
+        collection=collection,
+        embedding_model=embedding_model,
+        reranker_model=reranker_model,
+        ollama_host=settings.OLLAMA_HOST,
+        ollama_model=model_name
+    )
+
+    return CompareDocumentsResponse(
+        doc_a=result["doc_a"],
+        doc_b=result["doc_b"],
+        topic=result["topic"],
+        synthesis=result["synthesis"],
+        sources_a=result["sources_a"],
+        sources_b=result["sources_b"],
+        latency_ms=result["latency_ms"],
+        fallback_used=result["fallback_used"]
     )

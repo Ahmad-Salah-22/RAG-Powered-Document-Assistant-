@@ -55,6 +55,10 @@ class QueryRequest(BaseModel):
         default=False,
         description="Whether to apply query expansion before search."
     )
+    agentic_mode: Optional[bool] = Field(
+        default=False,
+        description="Whether to execute Agentic Corrective RAG (CRAG) with multi-hop decomposition and reflection."
+    )
 
     @field_validator("question")
     @classmethod
@@ -62,6 +66,16 @@ class QueryRequest(BaseModel):
         if not v or not v.strip():
             raise ValueError("Question cannot be empty or contain only whitespace.")
         return v.strip()
+
+
+class AgenticReasoningStep(BaseModel):
+    """Execution step inside the Agentic RAG reasoning and reflection trace."""
+    step_number: int = Field(..., description="Chronological sequence number.")
+    phase: str = Field(..., description="Pipeline phase name.")
+    status: str = Field(default="success", description="Status outcome: 'success', 'warning', 'info'.")
+    title: str = Field(..., description="Short headline summary of the action.")
+    description: str = Field(..., description="Detailed description of the reasoning decision.")
+    details: Optional[Dict[str, Any]] = Field(default=None, description="Structured diagnostics payload.")
 
 
 class SourceItem(BaseModel):
@@ -88,6 +102,45 @@ class QueryResponse(BaseModel):
     fallback_used: Optional[bool] = Field(False, description="Whether offline heuristic fallback was invoked.")
     retrieval_mode: Optional[str] = Field(default="hybrid", description="Active retrieval mode used.")
     reranker_used: Optional[bool] = Field(default=False, description="Whether Cross-Encoder re-ranking was executed.")
+    agentic_active: Optional[bool] = Field(default=False, description="Whether Agentic Reasoning mode was engaged.")
+    intent_type: Optional[str] = Field(default=None, description="Detected question intent classification.")
+    confidence_score: Optional[float] = Field(default=None, description="Self-reflected grounding confidence score (0-100).")
+    reasoning_steps: Optional[List[AgenticReasoningStep]] = Field(default=None, description="Step-by-step reasoning trace.")
+
+
+class CompareDocumentsRequest(BaseModel):
+    """Request payload to perform comparative analysis between two documents."""
+    doc_a: str = Field(..., description="Filename of the first document.")
+    doc_b: str = Field(..., description="Filename of the second document.")
+    comparison_topic: Optional[str] = Field(
+        default="Core concepts, algorithms, complexity trade-offs, and practical use cases",
+        description="Focal topic or theme for the comparative evaluation."
+    )
+    model: Optional[str] = Field(default=None, description="Optional LLM model override.")
+
+
+class CompareDocumentsResponse(BaseModel):
+    """Response payload containing comparative matrix and citations."""
+    doc_a: str
+    doc_b: str
+    topic: str
+    synthesis: str
+    sources_a: List[SourceItem] = Field(default_factory=list)
+    sources_b: List[SourceItem] = Field(default_factory=list)
+    latency_ms: float
+    fallback_used: bool = False
+
+
+class DocumentPageResponse(BaseModel):
+    """Details for a single page of an indexed document for interactive visual inspection."""
+    document_name: str
+    page_number: int
+    total_pages: int
+    text_content: str
+    char_count: int
+    has_file: bool = False
+    file_type: str = "pdf"
+    highlight_positions: Optional[List[Dict[str, Any]]] = None
 
 
 class HealthResponse(BaseModel):

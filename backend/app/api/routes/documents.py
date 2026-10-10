@@ -1,12 +1,14 @@
 import os
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, status
+from fastapi.responses import FileResponse
 from app.schemas.query import (
     DocumentListResponse,
     DocumentInfo,
     UploadResponse,
     DeleteResponse,
-    AnalyticsResponse
+    AnalyticsResponse,
+    DocumentPageResponse
 )
 from app.services.retrieval import (
     get_indexed_documents_stats,
@@ -201,4 +203,126 @@ async def get_analytics(request: Request):
             "configured_model": settings.OLLAMA_MODEL,
             "available_models": models_available
         }
+    )
+
+
+@router.get(
+    "/{document_name}/file",
+    summary="Download or Stream Document File",
+    description="Returns raw file stream (PDF, DOCX, TXT, etc.) for in-browser visual inspection."
+)
+async def get_document_file(document_name: str):
+    """Streams the physical document file for embedding in browser PDF viewer."""
+    possible_paths = [
+        os.path.join("./data/raw", document_name),
+        os.path.join("data/raw", document_name),
+        os.path.abspath(os.path.join("data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name))
+    ]
+    file_path = None
+    for p in possible_paths:
+        if os.path.isfile(p):
+            file_path = p
+            break
+
+    if not file_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Raw document file '{document_name}' not found on server disk."
+        )
+
+    ext = os.path.splitext(document_name)[1].lower()
+    media_types = {
+        ".pdf": "application/pdf",
+        ".txt": "text/plain",
+        ".md": "text/markdown",
+        ".markdown": "text/markdown",
+        ".csv": "text/csv",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+    media_type = media_types.get(ext, "application/octet-stream")
+
+    return FileResponse(
+        path=file_path,
+        media_type=media_type,
+        filename=document_name,
+        headers={"Content-Disposition": f"inline; filename={document_name}"}
+    )
+
+
+@router.get(
+    "/{document_name}/page/{page_number}",
+    response_model=DocumentPageResponse,
+    summary="Inspect Document Page Content",
+    description="Returns text content, character count, and total page count for a specific page of an indexed document."
+)
+async def get_document_page(document_name: str, page_number: int, request: Request, highlight: Optional[str] = None):
+    """Retrieves text content for a specific page of an indexed document."""
+    if page_number < 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Page number must be >= 1.")
+
+    collection = getattr(request.app.state, "chroma_collection", None)
+
+    # Check if raw file exists
+    possible_paths = [
+        os.path.join("./data/raw", document_name),
+        os.path.join("data/raw", document_name),
+        os.path.abspath(os.path.join("data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name))
+    ]
+    raw_path = next((p for p in possible_paths if os.path.isfile(p)), None)
+
+    ext = os.path.splitext(document_name)[1].lower().lstrip(".") or "pdf"
+    page_text = ""
+    total_pages = 1
+
+    if raw_path:
+        try:
+            with open(raw_path, "rb") as f:
+                content = f.read()
+            from app.services.ingestion import extract_from_bytes
+            pages, stats = extract_from_bytes(content, document_name)
+            total_pages = max(1, stats.get("page_count", len(pages)))
+            target_page = next((p for p in pages if p.get("page") == page_number), None)
+            if target_page:
+                page_text = target_page.get("text", "")
+            elif page_number <= len(pages):
+                page_text = pages[page_number - 1].get("text", "")
+        except Exception as e:
+            logger.warning(f"Could not extract page {page_number} directly from disk file '{document_name}': {e}")
+
+    # Fallback to ChromaDB chunks if raw file reading yielded empty or wasn't found
+    if not page_text and collection is not None:
+        try:
+            results = collection.get(where={"document": document_name})
+            if results and results.get("metadatas"):
+                doc_chunks = []
+                max_page_seen = 1
+                for meta, doc_str in zip(results["metadatas"], results.get("documents", [])):
+                    p_num = meta.get("page", 1)
+                    if p_num > max_page_seen:
+                        max_page_seen = p_num
+                    if p_num == page_number:
+                        doc_chunks.append(doc_str)
+                total_pages = max(total_pages, max_page_seen)
+                page_text = "\n\n".join(doc_chunks)
+        except Exception as e:
+            logger.warning(f"Error querying ChromaDB for page {page_number} of '{document_name}': {e}")
+
+    if not page_text and not raw_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document '{document_name}' or Page {page_number} not found."
+        )
+
+    return DocumentPageResponse(
+        document_name=document_name,
+        page_number=page_number,
+        total_pages=total_pages,
+        text_content=page_text,
+        char_count=len(page_text),
+        has_file=raw_path is not None,
+        file_type=ext
     )

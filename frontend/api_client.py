@@ -48,7 +48,8 @@ class RAGApiClient:
         chat_history: Optional[List[Dict[str, str]]] = None,
         retrieval_mode: Optional[str] = None,
         enable_reranker: Optional[bool] = None,
-        query_expansion: Optional[bool] = None
+        query_expansion: Optional[bool] = None,
+        agentic_mode: Optional[bool] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Sends user question and optional configuration to POST /query endpoint.
@@ -75,6 +76,8 @@ class RAGApiClient:
             payload["enable_reranker"] = enable_reranker
         if query_expansion is not None:
             payload["query_expansion"] = query_expansion
+        if agentic_mode is not None:
+            payload["agentic_mode"] = agentic_mode
 
         try:
             with httpx.Client(timeout=65.0) as client:
@@ -206,4 +209,58 @@ class RAGApiClient:
             return self.upload_document(content, filename)
         except Exception as e:
             return False, {"error": f"Failed reading local file '{filepath}': {str(e)}"}
+
+    def compare_documents(
+        self,
+        doc_a: str,
+        doc_b: str,
+        topic: str = "Core concepts, algorithms, complexity trade-offs, and practical use cases",
+        model: Optional[str] = None
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Calls POST /query/compare to perform side-by-side comparative analysis of two documents.
+        """
+        url = f"{self.base_url}/query/compare"
+        payload = {
+            "doc_a": doc_a,
+            "doc_b": doc_b,
+            "comparison_topic": topic
+        }
+        if model:
+            payload["model"] = model
+
+        try:
+            with httpx.Client(timeout=80.0) as client:
+                response = client.post(url, json=payload)
+                if response.status_code == 200:
+                    return True, response.json()
+                return False, {"error": f"HTTP {response.status_code}: {response.text}"}
+        except httpx.TimeoutException:
+            return False, {"error": "Comparison analysis timed out while waiting for LLM synthesis."}
+        except Exception as e:
+            return False, {"error": str(e)}
+
+    def get_document_page(self, document_name: str, page_number: int, highlight: Optional[str] = None) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Calls GET /documents/{document_name}/page/{page_number} for visual inspection.
+        """
+        url = f"{self.base_url}/documents/{document_name}/page/{page_number}"
+        params = {}
+        if highlight:
+            params["highlight"] = highlight
+
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(url, params=params)
+                if response.status_code == 200:
+                    return True, response.json()
+                return False, {"error": f"HTTP {response.status_code}: {response.text}"}
+        except Exception as e:
+            return False, {"error": str(e)}
+
+    def get_document_file_url(self, document_name: str) -> str:
+        """
+        Returns full stream URL for embedding or downloading the document file.
+        """
+        return f"{self.base_url}/documents/{document_name}/file"
 

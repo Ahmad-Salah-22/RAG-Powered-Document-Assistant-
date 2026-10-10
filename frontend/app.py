@@ -532,6 +532,52 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(16px);
     }
+
+    /* Agentic Reasoning Trace Cards */
+    .agentic-trace-card {
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin: 14px 0;
+        box-shadow: 0 8px 24px -6px rgba(139, 92, 246, 0.2);
+        backdrop-filter: blur(16px);
+    }
+    .agentic-step-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(139, 92, 246, 0.15);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #d8b4fe;
+    }
+
+    /* Document & PDF Viewer Styles */
+    .viewer-page-box {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 24px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        line-height: 1.7;
+        font-size: 0.95rem;
+        color: #f1f5f9;
+        max-height: 680px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+    .viewer-page-highlight {
+        background: rgba(245, 158, 11, 0.32);
+        border-bottom: 2px solid #f59e0b;
+        color: #fef08a;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -566,6 +612,18 @@ if "enable_reranker" not in st.session_state:
 
 if "query_expansion" not in st.session_state:
     st.session_state.query_expansion = False
+
+if "agentic_mode" not in st.session_state:
+    st.session_state.agentic_mode = True
+
+if "viewer_selected_doc" not in st.session_state:
+    st.session_state.viewer_selected_doc = ""
+
+if "viewer_selected_page" not in st.session_state:
+    st.session_state.viewer_selected_page = 1
+
+if "viewer_highlight" not in st.session_state:
+    st.session_state.viewer_highlight = ""
 
 if "chat_sessions" not in st.session_state:
     st.session_state.chat_sessions = {"Session 1": []}
@@ -642,6 +700,71 @@ def render_citation_card(src: Dict[str, Any], key_prefix: str = "src"):
         <div class="citation-snippet-quote">"{snippet}"</div>
     </div>
     """, unsafe_allow_html=True)
+
+    with st.expander(f"👁️ View Document Page [{doc} • Page {page}]", expanded=False):
+        c_pv1, c_pv2 = st.columns([3, 1])
+        with c_pv1:
+            st.markdown(f"**Verified Citation:** `{doc}` (Page {page})")
+        with c_pv2:
+            file_url = api_client.get_document_file_url(doc)
+            st.markdown(f"<a href='{file_url}#page={page}' target='_blank' style='text-decoration:none;'><span style='background:rgba(99,102,241,0.25);color:#c7d2fe;border:1px solid rgba(99,102,241,0.45);padding:4px 10px;border-radius:6px;font-size:0.78rem;font-weight:700;'>↗️ Open PDF</span></a>", unsafe_allow_html=True)
+
+        ok_pg, pg_data = api_client.get_document_page(doc, page)
+        if ok_pg and pg_data.get("text_content"):
+            pg_txt = pg_data["text_content"]
+            search_token = snippet[:35] if snippet else ""
+            if search_token and search_token in pg_txt:
+                disp_txt = pg_txt.replace(search_token, f"<mark style='background:rgba(245,158,11,0.35);color:#fef08a;padding:2px 4px;border-radius:4px;'>{search_token}</mark>")
+            else:
+                disp_txt = pg_txt
+            st.markdown(f"<div style='background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; font-size: 0.85rem; max-height: 220px; overflow-y: auto; line-height: 1.6;'>{disp_txt}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div style='background: rgba(15,23,42,0.65); border-radius: 10px; padding: 12px; font-size: 0.85rem;'>{snippet}</div>", unsafe_allow_html=True)
+
+
+def render_agentic_reasoning_trace(reasoning_steps: List[Dict[str, Any]], intent_type: str = "factual_lookup", confidence_score: float = 85.0):
+    """Renders a visual step-by-step CRAG reasoning and reflection trace."""
+    if not reasoning_steps:
+        return
+
+    intent_label = intent_type.replace("_", " ").title() if intent_type else "Factual Lookup"
+    conf_str = f"{confidence_score:.1f}%" if confidence_score else "N/A"
+
+    with st.expander(f"🧠 Agentic Reasoning & Reflection Trace (CRAG) • Intent: {intent_label} • Grounding: {conf_str}", expanded=True):
+        st.markdown(f"""
+        <div class="agentic-trace-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div class="agentic-step-pill">🎯 Intent: <b>{intent_label}</b></div>
+                <div class="agentic-step-pill" style="border-color: rgba(16, 185, 129, 0.5); color: #6ee7b7; background: rgba(16, 185, 129, 0.15);">🛡️ Grounding Confidence: <b>{conf_str}</b></div>
+                <div class="agentic-step-pill" style="border-color: rgba(6, 182, 212, 0.5); color: #67e8f9; background: rgba(6, 182, 212, 0.15);">⚡ Multi-Hop Fusion Active</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        for step in reasoning_steps:
+            s_num = step.get("step_number", 1)
+            s_phase = step.get("phase", "Reasoning")
+            s_title = step.get("title", "")
+            s_desc = step.get("description", "")
+            s_details = step.get("details", {})
+            s_status = step.get("status", "success")
+
+            status_color = "#10b981" if s_status == "success" else ("#f59e0b" if s_status == "warning" else "#6366f1")
+
+            st.markdown(f"""
+            <div style="display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; background: rgba(15, 23, 42, 0.5); padding: 12px 14px; border-radius: 12px; border-left: 3px solid {status_color};">
+                <div style="background: {status_color}; color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">{s_num}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 0.88rem; color: #f8fafc;">{s_phase}: <span style="color: #cbd5e1; font-weight: 500;">{s_title}</span></div>
+                    <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 3px; line-height: 1.5;">{s_desc}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if s_details and isinstance(s_details, dict):
+                sub_q = s_details.get("sub_queries")
+                if sub_q:
+                    st.caption(f"🧩 Decomposed Sub-queries: {', '.join([f'`{q}`' for q in sub_q])}")
+
 
 def render_ragas_radar_svg(metrics: Dict[str, float], overall_score: float) -> str:
     """Renders a responsive, glowing Cyber-Glassmorphic SVG Radar/Spider Chart for the Ragas Triad."""
@@ -835,6 +958,7 @@ with st.sidebar:
             st.session_state.retrieval_mode = "hybrid"
             st.session_state.enable_reranker = True
             st.session_state.query_expansion = True
+            st.session_state.agentic_mode = True
             st.session_state.top_k = 4
             st.session_state.sim_threshold = 1.05
             st.session_state.prompt_mode = "academic"
@@ -842,6 +966,7 @@ with st.sidebar:
             st.session_state.retrieval_mode = "hybrid"
             st.session_state.enable_reranker = False
             st.session_state.query_expansion = False
+            st.session_state.agentic_mode = False
             st.session_state.top_k = 2
             st.session_state.sim_threshold = 0.75
             st.session_state.prompt_mode = "academic"
@@ -849,6 +974,7 @@ with st.sidebar:
             st.session_state.retrieval_mode = "hybrid"
             st.session_state.enable_reranker = False
             st.session_state.query_expansion = False
+            st.session_state.agentic_mode = True
             st.session_state.top_k = 4
             st.session_state.sim_threshold = 1.00
             st.session_state.prompt_mode = "academic"
@@ -856,6 +982,7 @@ with st.sidebar:
             st.session_state.retrieval_mode = "hybrid"
             st.session_state.enable_reranker = True
             st.session_state.query_expansion = True
+            st.session_state.agentic_mode = True
             st.session_state.top_k = 8
             st.session_state.sim_threshold = 1.30
             st.session_state.prompt_mode = "detailed"
@@ -863,6 +990,7 @@ with st.sidebar:
             st.session_state.retrieval_mode = "dense"
             st.session_state.enable_reranker = False
             st.session_state.query_expansion = False
+            st.session_state.agentic_mode = False
             st.session_state.top_k = 2
             st.session_state.sim_threshold = 1.00
             st.session_state.prompt_mode = "concise"
@@ -881,6 +1009,7 @@ with st.sidebar:
 
     st.session_state.enable_reranker = st.checkbox("🧠 Cross-Encoder Re-Ranking", value=st.session_state.enable_reranker, help="Scored using ms-marco-MiniLM cross-encoder.")
     st.session_state.query_expansion = st.checkbox("🔍 Query Expansion (HyDE)", value=st.session_state.query_expansion, help="Expands technical terms and domain acronyms.")
+    st.session_state.agentic_mode = st.checkbox("🤖 Agentic Reasoning & Reflection (CRAG)", value=st.session_state.agentic_mode, help="Self-reflective RAG with query decomposition, multi-hop retrieval, and relevance grading.")
 
     # Quick tuning parameters
     st.markdown("---")
@@ -987,9 +1116,10 @@ st.markdown("""
 # ---------------------------------------------------------
 # Main Navigation Tabs
 # ---------------------------------------------------------
-tab_chat, tab_docs, tab_settings, tab_analytics = st.tabs([
+tab_chat, tab_docs, tab_viewer, tab_settings, tab_analytics = st.tabs([
     "💬 Intelligent Assistant",
     f"📁 Document Library ({len(active_docs)})",
+    "📑 Visual Document & PDF Viewer",
     "⚙️ RAG Studio Settings",
     "📊 Analytics & Performance"
 ])
@@ -1062,12 +1192,57 @@ with tab_chat:
         if st.button("📋 Executive Synthesis Brief", use_container_width=True, help="Synthesize executive summary and takeaways"):
             st.session_state.pending_query = "Generate an executive briefing outlining the core principles, practical applications, and critical architectural points."
 
+    # Multi-Document Comparative Matrix Studio
+    with st.expander("⚖️ Multi-Document Comparative Matrix Studio", expanded=False):
+        st.markdown("Select two indexed documents to execute an automated side-by-side comparative analysis with cross-document citation matrices.")
+        c_cmp1, c_cmp2 = st.columns(2)
+        with c_cmp1:
+            cmp_doc_a = st.selectbox("Document A", options=active_docs if active_docs else ["None"], key="cmp_sel_a")
+        with c_cmp2:
+            other_docs = [d for d in active_docs if d != cmp_doc_a] if active_docs else []
+            cmp_doc_b = st.selectbox("Document B", options=other_docs if other_docs else active_docs, key="cmp_sel_b")
+
+        cmp_topic = st.text_input(
+            "Comparison Topic / Focus Area",
+            value="Core concepts, algorithmic differences, performance trade-offs, and practical use cases",
+            key="cmp_input_topic"
+        )
+
+        if st.button("🚀 Run Comparative Analysis Matrix", type="primary", use_container_width=True, key="btn_run_cmp"):
+            if cmp_doc_a and cmp_doc_b and cmp_doc_a != cmp_doc_b:
+                with st.spinner(f"Analyzing and comparing `{cmp_doc_a}` vs `{cmp_doc_b}`..."):
+                    ok_cmp, res_cmp = api_client.compare_documents(cmp_doc_a, cmp_doc_b, cmp_topic)
+                    if ok_cmp:
+                        st.success(f"Comparative matrix generated in {res_cmp.get('latency_ms', 0):.0f}ms!")
+                        st.markdown(res_cmp.get("synthesis", ""))
+                        c_s1, c_s2 = st.columns(2)
+                        with c_s1:
+                            st.markdown(f"**📚 Sources from `{cmp_doc_a}`:**")
+                            for s in res_cmp.get("sources_a", []):
+                                st.caption(f"- Page {s.get('page')}: \"{s.get('snippet', '')[:80]}...\"")
+                        with c_s2:
+                            st.markdown(f"**📚 Sources from `{cmp_doc_b}`:**")
+                            for s in res_cmp.get("sources_b", []):
+                                st.caption(f"- Page {s.get('page')}: \"{s.get('snippet', '')[:80]}...\"")
+                    else:
+                        st.error(f"Comparison failed: {res_cmp.get('error')}")
+            else:
+                st.warning("Please ensure you have at least two distinct documents selected.")
+
     st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
 
     # Render Chat History
     for idx, msg in enumerate(st.session_state.messages):
         with st.chat_message(msg["role"], avatar="🧑‍💻" if msg["role"] == "user" else "🤖"):
             st.markdown(msg["content"])
+
+            # Agentic CRAG Reasoning Trace Expander if present
+            if msg.get("reasoning_steps"):
+                render_agentic_reasoning_trace(
+                    msg["reasoning_steps"],
+                    intent_type=msg.get("intent_type", "factual_lookup"),
+                    confidence_score=msg.get("confidence_score", 85.0)
+                )
 
             # Rich Citation Cards
             if msg.get("sources"):
@@ -1084,15 +1259,17 @@ with tab_chat:
                 model_used = m.get("model_used", "Local LLM")
                 ret_mode = m.get("retrieval_mode", "hybrid").upper()
                 rerank_active = m.get("reranker_used", False)
+                agentic_on = m.get("agentic_active", False)
                 fallback_used = m.get("fallback_used", False)
                 
                 rerank_tag = " <span style='color: #c084fc; font-weight: 700;'>• Reranked</span>" if rerank_active else ""
+                crag_tag = " <span style='color: #a855f7; font-weight: 700;'>• CRAG Reflection</span>" if agentic_on else ""
                 fallback_tag = "<span style='color: #f59e0b; font-weight: 700;'>• Fallback Engine Active</span>" if fallback_used else ""
 
                 st.markdown(f"""
                 <div class="metric-pill-container">
                     <div class="metric-pill">⚡ Total: <b>{lat_total:.0f}ms</b> (Retrieval: {lat_ret:.0f}ms | Generation: {lat_gen:.0f}ms)</div>
-                    <div class="metric-pill">🔍 Mode: <b>{ret_mode}</b>{rerank_tag}</div>
+                    <div class="metric-pill">🔍 Mode: <b>{ret_mode}</b>{rerank_tag}{crag_tag}</div>
                     <div class="metric-pill">🤖 Model: <b>{model_used}</b> {fallback_tag}</div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1147,12 +1324,18 @@ with tab_chat:
                     chat_history=recent_history,
                     retrieval_mode=st.session_state.retrieval_mode,
                     enable_reranker=st.session_state.enable_reranker,
-                    query_expansion=st.session_state.query_expansion
+                    query_expansion=st.session_state.query_expansion,
+                    agentic_mode=st.session_state.agentic_mode
                 )
 
                 if success:
                     answer = response.get("answer", "No answer generated.")
                     sources = response.get("sources", [])
+                    reasoning_steps = response.get("reasoning_steps", [])
+                    intent_type = response.get("intent_type", "factual_lookup")
+                    conf_score = response.get("confidence_score", 85.0)
+                    agentic_active = response.get("agentic_active", False)
+
                     metrics = {
                         "latency_ms": response.get("latency_ms", 0),
                         "retrieval_latency_ms": response.get("retrieval_latency_ms", 0),
@@ -1160,8 +1343,13 @@ with tab_chat:
                         "model_used": response.get("model_used", "N/A"),
                         "retrieval_mode": response.get("retrieval_mode", st.session_state.retrieval_mode),
                         "reranker_used": response.get("reranker_used", False),
-                        "fallback_used": response.get("fallback_used", False)
+                        "fallback_used": response.get("fallback_used", False),
+                        "agentic_active": agentic_active
                     }
+
+                    # Render Agentic Reasoning Trace
+                    if reasoning_steps:
+                        render_agentic_reasoning_trace(reasoning_steps, intent_type=intent_type, confidence_score=conf_score)
 
                     # Stream Answer Dynamically
                     st.write_stream(text_stream_generator(answer))
@@ -1174,12 +1362,13 @@ with tab_chat:
 
                     ret_mode = metrics.get("retrieval_mode", "hybrid").upper()
                     rerank_tag = " <span style='color: #c084fc; font-weight: 700;'>• Reranked</span>" if metrics.get("reranker_used") else ""
+                    crag_tag = " <span style='color: #a855f7; font-weight: 700;'>• CRAG Active</span>" if agentic_active else ""
                     fallback_tag = "<span style='color: #f59e0b; font-weight: 700;'>• Fallback Engine Active</span>" if metrics.get("fallback_used") else ""
 
                     st.markdown(f"""
                     <div class="metric-pill-container">
                         <div class="metric-pill">⚡ Total: <b>{metrics['latency_ms']:.0f}ms</b> (Retrieval: {metrics['retrieval_latency_ms']:.0f}ms | Generation: {metrics['generation_latency_ms']:.0f}ms)</div>
-                        <div class="metric-pill">🔍 Mode: <b>{ret_mode}</b>{rerank_tag}</div>
+                        <div class="metric-pill">🔍 Mode: <b>{ret_mode}</b>{rerank_tag}{crag_tag}</div>
                         <div class="metric-pill">🤖 Model: <b>{metrics['model_used']}</b> {fallback_tag}</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1190,6 +1379,9 @@ with tab_chat:
                         "content": answer,
                         "sources": sources,
                         "metrics": metrics,
+                        "reasoning_steps": reasoning_steps,
+                        "intent_type": intent_type,
+                        "confidence_score": conf_score,
                         "timestamp": time.strftime("%H:%M:%S")
                     })
                     # Sync to active chat session
@@ -1391,7 +1583,109 @@ with tab_docs:
 
 
 # =========================================================
-# TAB 3: RAG Studio Settings & Pipeline Tuning
+# TAB 3: Visual Document & Interactive PDF Viewer
+# =========================================================
+with tab_viewer:
+    st.markdown("### 📑 Visual Document & Interactive PDF Viewer")
+    st.markdown("Audit grounded citations visually with side-by-side extracted page text, excerpt highlighting, and native PDF viewport.")
+
+    if not active_docs:
+        st.info("No documents currently indexed. Please upload or ingest documents in Tab 2 to preview.")
+    else:
+        v_col1, v_col2, v_col3 = st.columns([2.5, 1.5, 2.5])
+        with v_col1:
+            def_idx = 0
+            if st.session_state.viewer_selected_doc in active_docs:
+                def_idx = active_docs.index(st.session_state.viewer_selected_doc)
+            sel_doc = st.selectbox(
+                "Select Document to Inspect:",
+                options=active_docs,
+                index=def_idx,
+                key="v_doc_select"
+            )
+            st.session_state.viewer_selected_doc = sel_doc
+
+        # Query first page to discover page count
+        _p_ok, _p_info = api_client.get_document_page(sel_doc, 1)
+        tot_pages = _p_info.get("total_pages", 1) if _p_ok else 1
+
+        with v_col2:
+            cur_p = min(max(1, st.session_state.viewer_selected_page), max(1, tot_pages))
+            sel_page = st.number_input(
+                f"Page (1 to {tot_pages}):",
+                min_value=1,
+                max_value=max(1, tot_pages),
+                value=cur_p,
+                step=1,
+                key="v_page_select"
+            )
+            st.session_state.viewer_selected_page = sel_page
+
+        with v_col3:
+            hl_query = st.text_input(
+                "Search & Highlight in Page:",
+                value=st.session_state.viewer_highlight,
+                placeholder="e.g. hash table, gradient descent...",
+                key="v_hl_query"
+            )
+            st.session_state.viewer_highlight = hl_query
+
+        # Retrieve page details
+        pg_ok, pg_data = api_client.get_document_page(sel_doc, sel_page, highlight=hl_query)
+
+        st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+
+        col_pv_left, col_pv_right = st.columns([1.1, 1.2])
+
+        with col_pv_left:
+            st.markdown(f"##### 📄 Extracted Content (Page {sel_page} of {tot_pages})")
+            if pg_ok:
+                c_cnt = pg_data.get("char_count", 0)
+                f_type = pg_data.get("file_type", "pdf").upper()
+                st.markdown(f"""
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <span class="citation-page-badge">{f_type} Format</span>
+                    <span class="citation-conf-badge conf-high">{c_cnt} Characters</span>
+                    <span class="citation-conf-badge conf-med">Page {sel_page} / {tot_pages}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+                raw_text = pg_data.get("text_content", "")
+                if hl_query and hl_query.strip():
+                    import re
+                    pattern = re.compile(re.escape(hl_query.strip()), re.IGNORECASE)
+                    rendered_page_text = pattern.sub(lambda m: f"<span class='viewer-page-highlight'>{m.group(0)}</span>", raw_text)
+                else:
+                    rendered_page_text = raw_text
+
+                st.markdown(f"""
+                <div class="viewer-page-box">
+                    {rendered_page_text if rendered_page_text.strip() else "<i>(Page contains no extracted text or is an image/scanned page)</i>"}
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning(f"Could not load page {sel_page}: {pg_data.get('error')}")
+
+        with col_pv_right:
+            st.markdown("##### 🔍 Native Document Viewport / PDF Stream")
+            stream_url = api_client.get_document_file_url(sel_doc)
+            st.markdown(f"""
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.82rem; color: #94a3b8;">Full browser PDF stream with zoom & search</span>
+                <a href="{stream_url}#page={sel_page}" target="_blank" style="text-decoration:none;">
+                    <span style="background: rgba(99,102,241,0.25); color: #c7d2fe; border: 1px solid rgba(99,102,241,0.5); padding: 4px 10px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">↗️ Pop-out PDF Window</span>
+                </a>
+            </div>
+            <iframe 
+                src="{stream_url}#page={sel_page}" 
+                width="100%" 
+                height="680px" 
+                style="border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; background: rgba(15, 23, 42, 0.9);">
+            </iframe>
+            """, unsafe_allow_html=True)
+
+# =========================================================
+# TAB 4: RAG Studio Settings & Pipeline Tuning
 # =========================================================
 with tab_settings:
     st.markdown("### ⚙️ RAG Pipeline Studio & Hyperparameter Tuning")
@@ -1568,7 +1862,7 @@ with tab_settings:
 
 
 # =========================================================
-# TAB 4: Analytics & Performance Insights
+# TAB 5: Analytics & Performance Insights
 # =========================================================
 with tab_analytics:
     st.markdown("### 📊 Vector Corpus Analytics & Pipeline Performance")
