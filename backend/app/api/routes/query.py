@@ -63,6 +63,10 @@ async def query_documents(payload: QueryRequest, request: Request):
     # Retrieval parameters
     top_k = payload.top_k or settings.TOP_K
     model_name = payload.model or settings.OLLAMA_MODEL
+    retrieval_mode = payload.retrieval_mode or getattr(settings, "DEFAULT_RETRIEVAL_MODE", "hybrid")
+    enable_reranker = payload.enable_reranker if payload.enable_reranker is not None else getattr(settings, "ENABLE_RERANKER", False)
+    query_expansion = bool(payload.query_expansion)
+    reranker_model = getattr(request.app.state, "reranker_model", None)
 
     # Step 1: Retrieval
     start_retrieval = time.perf_counter()
@@ -72,9 +76,15 @@ async def query_documents(payload: QueryRequest, request: Request):
         embedding_model=embedding_model,
         top_k=top_k,
         document_filter=payload.document_filter,
-        similarity_threshold=payload.similarity_threshold
+        similarity_threshold=payload.similarity_threshold,
+        retrieval_mode=retrieval_mode,
+        reranker_model=reranker_model,
+        enable_reranker=enable_reranker,
+        query_expansion=query_expansion
     )
     retrieval_latency = (time.perf_counter() - start_retrieval) * 1000.0
+
+    reranker_applied = any(s.retrieval_method == "cross_encoder" for s in sources)
 
     if not context:
         logger.info(f"No context found for query '{question}'. Returning default ungrounded notice.")
@@ -86,7 +96,9 @@ async def query_documents(payload: QueryRequest, request: Request):
             latency_ms=round(total_latency, 2),
             retrieval_latency_ms=round(retrieval_latency, 2),
             generation_latency_ms=0.0,
-            fallback_used=False
+            fallback_used=False,
+            retrieval_mode=retrieval_mode,
+            reranker_used=reranker_applied
         )
 
     # Convert chat history if present
@@ -116,5 +128,7 @@ async def query_documents(payload: QueryRequest, request: Request):
         latency_ms=round(total_latency, 2),
         retrieval_latency_ms=round(retrieval_latency, 2),
         generation_latency_ms=round(generation_latency, 2),
-        fallback_used=fallback_used
+        fallback_used=fallback_used,
+        retrieval_mode=retrieval_mode,
+        reranker_used=reranker_applied
     )

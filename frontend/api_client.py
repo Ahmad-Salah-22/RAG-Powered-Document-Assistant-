@@ -45,7 +45,10 @@ class RAGApiClient:
         document_filter: Optional[List[str]] = None,
         similarity_threshold: Optional[float] = None,
         system_prompt_mode: Optional[str] = None,
-        chat_history: Optional[List[Dict[str, str]]] = None
+        chat_history: Optional[List[Dict[str, str]]] = None,
+        retrieval_mode: Optional[str] = None,
+        enable_reranker: Optional[bool] = None,
+        query_expansion: Optional[bool] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Sends user question and optional configuration to POST /query endpoint.
@@ -66,6 +69,12 @@ class RAGApiClient:
             payload["system_prompt_mode"] = system_prompt_mode
         if chat_history:
             payload["chat_history"] = chat_history
+        if retrieval_mode:
+            payload["retrieval_mode"] = retrieval_mode
+        if enable_reranker is not None:
+            payload["enable_reranker"] = enable_reranker
+        if query_expansion is not None:
+            payload["query_expansion"] = query_expansion
 
         try:
             with httpx.Client(timeout=65.0) as client:
@@ -162,7 +171,7 @@ class RAGApiClient:
             os.path.join(os.getcwd(), "..", "data", "raw"),
             os.path.abspath("data/raw")
         ]
-        valid_extensions = {".pdf", ".txt", ".md", ".markdown"}
+        valid_extensions = {".pdf", ".txt", ".md", ".markdown", ".docx", ".pptx", ".csv", ".xlsx"}
         found_files: List[Dict[str, Any]] = []
         seen_names = set()
 

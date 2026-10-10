@@ -75,7 +75,7 @@ async def upload_document(
     if not filename:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No file provided.")
 
-    valid_extensions = [".pdf", ".txt", ".md", ".markdown"]
+    valid_extensions = [".pdf", ".txt", ".md", ".markdown", ".docx", ".pptx", ".csv", ".xlsx"]
     ext = os.path.splitext(filename)[1].lower()
     if ext not in valid_extensions:
         raise HTTPException(
@@ -99,7 +99,10 @@ async def upload_document(
             document_name=filename,
             pages=result["pages"],
             chunks_indexed=result["chunks_indexed"],
-            char_count=result["char_count"]
+            char_count=result["char_count"],
+            file_type=result.get("file_type", ext.lstrip(".")),
+            requires_ocr=result.get("requires_ocr", False),
+            summary_preview=result.get("summary_preview")
         )
 
     except Exception as e:

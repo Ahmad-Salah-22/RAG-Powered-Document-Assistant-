@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 150
     TOP_K: int = 4
+    DEFAULT_RETRIEVAL_MODE: str = "hybrid"  # "hybrid", "dense", "bm25"
+    ENABLE_RERANKER: bool = False
+    RERANKER_MODEL_NAME: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     # CORS Settings
     CORS_ORIGINS: Union[List[str], str] = [

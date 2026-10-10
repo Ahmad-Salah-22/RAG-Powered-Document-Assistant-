@@ -43,6 +43,18 @@ class QueryRequest(BaseModel):
         default=None,
         description="Recent conversation turns for follow-up question context."
     )
+    retrieval_mode: Optional[str] = Field(
+        default="hybrid",
+        description="Retrieval strategy: 'hybrid' (Dense + BM25 RRF), 'dense' (Vector only), or 'bm25' (Lexical only)."
+    )
+    enable_reranker: Optional[bool] = Field(
+        default=False,
+        description="Whether to apply Cross-Encoder re-ranking to top candidate chunks."
+    )
+    query_expansion: Optional[bool] = Field(
+        default=False,
+        description="Whether to apply query expansion before search."
+    )
 
     @field_validator("question")
     @classmethod
@@ -59,6 +71,10 @@ class SourceItem(BaseModel):
     snippet: Optional[str] = Field(None, description="Relevant excerpt text snippet.")
     score: Optional[float] = Field(None, description="Relevance distance / similarity score.")
     confidence_percent: Optional[float] = Field(None, description="Estimated match confidence percentage.")
+    retrieval_method: Optional[str] = Field(default="dense", description="Method used: 'dense', 'bm25', 'hybrid_rrf', or 'reranked'.")
+    dense_rank: Optional[int] = Field(default=None, description="Rank from dense vector search (if applicable).")
+    bm25_rank: Optional[int] = Field(default=None, description="Rank from BM25 lexical search (if applicable).")
+    rerank_score: Optional[float] = Field(default=None, description="Score from Cross-Encoder re-ranking.")
 
 
 class QueryResponse(BaseModel):
@@ -70,6 +86,8 @@ class QueryResponse(BaseModel):
     retrieval_latency_ms: Optional[float] = Field(None, description="Vector search latency in milliseconds.")
     generation_latency_ms: Optional[float] = Field(None, description="LLM generation latency in milliseconds.")
     fallback_used: Optional[bool] = Field(False, description="Whether offline heuristic fallback was invoked.")
+    retrieval_mode: Optional[str] = Field(default="hybrid", description="Active retrieval mode used.")
+    reranker_used: Optional[bool] = Field(default=False, description="Whether Cross-Encoder re-ranking was executed.")
 
 
 class HealthResponse(BaseModel):
@@ -89,6 +107,9 @@ class DocumentInfo(BaseModel):
     page_count: int = Field(..., description="Total pages detected.")
     char_count: int = Field(0, description="Total extracted character count.")
     file_size_bytes: Optional[int] = Field(None, description="File size on disk if available.")
+    file_type: Optional[str] = Field("pdf", description="Document format extension: 'pdf', 'docx', 'pptx', 'csv', 'xlsx', 'md', 'txt'.")
+    requires_ocr: Optional[bool] = Field(False, description="Flag indicating image-heavy or scanned pages.")
+    summary_preview: Optional[str] = Field(None, description="Auto-generated document abstract preview.")
 
 
 class DocumentListResponse(BaseModel):
@@ -105,6 +126,9 @@ class UploadResponse(BaseModel):
     pages: int
     chunks_indexed: int
     char_count: int
+    file_type: Optional[str] = "pdf"
+    requires_ocr: Optional[bool] = False
+    summary_preview: Optional[str] = None
 
 
 class DeleteResponse(BaseModel):

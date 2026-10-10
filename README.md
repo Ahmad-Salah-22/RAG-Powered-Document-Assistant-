@@ -6,16 +6,16 @@ A complete, production-grade **Retrieval-Augmented Generation (RAG) Document Ass
 
 ## 🌟 Key Features
 
-- **Document Extraction & Dynamic Ingestion**: Multi-format parser for PDF, TXT, and Markdown files supporting both batch ingestion and real-time drag-and-drop file upload.
-- **Semantic Chunking**: Overlapping text chunker (default size `800`, overlap `150`) preserving document title, page numbers, and chunk IDs.
-- **Dense Vector Embeddings**: Local SentenceTransformer model (`all-MiniLM-L6-v2`) generating 384-dimensional dense semantic representations.
-- **Persistent Vector Database**: ChromaDB vector store persisting vector indices, documents, and page metadata to disk (`backend/data/vector_store/`).
-- **Context Retrieval with Target Filtering**: Similarity search with cosine distance metric, customizable Top-K chunks (1-12), minimum confidence cutoff, and document-specific filtering (`document_filter`).
-- **Multi-Persona LLM Generation**: Integration with local Ollama LLMs (e.g. `llama3:8b`, `mistral`, `gemma2`) with selectable personas (Academic & Formal, Ultra-Concise, Tutorial Breakdown, Executive Summary).
-- **Conversational Memory**: Multi-turn chat context support enabling intuitive follow-up questions and conversational coherence.
-- **Intelligent Offline Fallback**: Direct extractive grounded synthesis engine ensuring reliable demo operation even if local Ollama daemon is offline.
-- **Interactive 4-Tab Streamlit Studio Pro**: Cyber-glassmorphism dark UI featuring real-time token streaming, rich citation cards with confidence meters, categorized prompt library, 1-click demo dataset loader, pipeline optimization presets, session latency trend analytics, and Markdown/JSON export.
-- **Automated Test Suite**: 11 comprehensive Pytest test cases covering valid query flows, input validation, document uploads, deletions, and health checks.
+- **Advanced SOTA Hybrid Retrieval**: Dual-engine search fusing dense semantic embeddings (`all-MiniLM-L6-v2`) with in-memory **BM25 Okapi lexical indexing** via **Reciprocal Rank Fusion (RRF)** for optimal terminology and acronym matching.
+- **Cross-Encoder Re-Ranking**: 2-stage retrieval pipeline with deep joint-attention re-ranking via `cross-encoder/ms-marco-MiniLM-L-6-v2` to suppress context noise and elevate answer fidelity.
+- **Multimodal Document Processing**: Unified ingestion engine supporting **PDF**, Microsoft Word (**DOCX**), PowerPoint (**PPTX**), Spreadsheets (**CSV**, **XLSX**), Markdown, and TXT files.
+- **Scanned Document Detection & Auto-Abstracting**: Instant detection of image-heavy/scanned pages with OCR warning flags and automatic document abstract generation upon upload.
+- **Semantic Query Expansion (HyDE)**: Technical query pre-processing and acronym bridge expansion.
+- **Multi-Session Conversation Threads**: Multi-threaded chat session management in the sidebar enabling separate, persistent discussion workflows.
+- **AI Study & Research Accelerators**: 1-click tools for generating study flashcards, self-test quizzes, and comparative concept analyses.
+- **Automated Ragas Triad Evaluation**: Built-in benchmark suite measuring **Faithfulness (Grounding)**, **Answer Relevance**, **Context Precision**, and **Context Recall** with interactive radar charts in Tab 4.
+- **Interactive 4-Tab Streamlit Studio Pro**: Cyber-glassmorphism dark UI featuring real-time token streaming, rich citation cards with rank indicators, categorized prompt library, 1-click demo dataset loader, and Markdown/JSON export.
+- **Comprehensive Automated Test Suite**: 17 Pytest test cases covering retrieval, multimodal parsers, input validation, and API routes.
 - **Docker & Compose Ready**: Containerized backend and frontend with Docker Compose support.
 
 ---
@@ -25,19 +25,20 @@ A complete, production-grade **Retrieval-Augmented Generation (RAG) Document Ass
 ```mermaid
 flowchart LR
     subgraph Ingestion Pipeline
-        A[PDF Documents in data/raw] --> B[PyPDF Extraction & Cleaning]
+        A[Files: PDF, DOCX, PPTX, CSV, XLSX, MD] --> B[Multi-Format Extractor Engine]
         B --> C[Chunking size=800, overlap=150]
         C --> D[SentenceTransformers Embeddings]
-        D --> E[(ChromaDB Persistent Store)]
+        D --> E[(ChromaDB + BM25 Corpus)]
     end
 
     subgraph Runtime Pipeline
-        F[User Question] --> G[Streamlit Frontend]
-        G --> H[FastAPI Backend /query]
-        H --> I[ChromaDB Top-K Search]
-        I --> J[Grounded System Prompt]
-        J --> K[Ollama Local LLM]
-        K --> H
+        F[User Question] --> G[Streamlit Studio Pro]
+        G --> H[FastAPI /query]
+        H --> I[Hybrid Search: Dense + BM25 RRF]
+        I --> J[Cross-Encoder Re-Ranking]
+        J --> K[Grounded System Prompt]
+        K --> L[Ollama Local LLM]
+        L --> H
         H --> G
     end
 ```
@@ -49,10 +50,11 @@ flowchart LR
 | Component | Technologies Used |
 | :--- | :--- |
 | **Backend API** | Python 3.10+, FastAPI, Uvicorn, Pydantic, pydantic-settings, HTTPX, Pytest |
-| **RAG / Vector Database** | SentenceTransformers (`all-MiniLM-L6-v2`), ChromaDB, PyPDF |
+| **RAG / Vector Database** | SentenceTransformers (`all-MiniLM-L6-v2`), Cross-Encoder (`ms-marco-MiniLM-L-6-v2`), ChromaDB, BM25 Okapi |
+| **Document Parsers** | PyPDF, python-pptx, openpyxl, pandas, zipfile XML parsing |
 | **Local LLM** | Ollama (`llama3:8b`, `mistral`) |
 | **Frontend UI** | Streamlit, Glassmorphism CSS |
-| **Data & Notebook** | Jupyter Notebook, Pandas, NumPy, ReportLab |
+| **Evaluation Suite** | Ragas Triad (Faithfulness, Relevance, Context Precision & Recall) |
 | **DevOps & Containers** | Docker, Docker Compose, Git |
 
 ---

@@ -55,10 +55,92 @@ def extract_pdf_pages(pdf_path: str) -> Tuple[List[Dict[str, Any]], Dict[str, An
     return pages, stats
 
 
+import zipfile
+import xml.etree.ElementTree as ET
+import csv
+
+
+def _extract_docx(file_bytes: bytes) -> str:
+    """Extracts paragraph text from Word .docx file via package XML."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
+            if "word/document.xml" not in zf.namelist():
+                return ""
+            xml_content = zf.read("word/document.xml")
+            tree = ET.fromstring(xml_content)
+            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+            paragraphs = []
+            for p in tree.findall(".//w:p", ns):
+                texts = [node.text for node in p.findall(".//w:t", ns) if node.text]
+                if texts:
+                    paragraphs.append("".join(texts).strip())
+            return "\n\n".join(paragraphs)
+    except Exception as e:
+        logger.error(f"Error parsing docx file: {e}")
+        return ""
+
+
+def _extract_pptx(file_bytes: bytes) -> List[Dict[str, Any]]:
+    """Extracts slide text from PowerPoint .pptx file."""
+    pages = []
+    try:
+        from pptx import Presentation
+        prs = Presentation(io.BytesIO(file_bytes))
+        for slide_idx, slide in enumerate(prs.slides, start=1):
+            slide_texts = []
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for p in shape.text_frame.paragraphs:
+                        txt = "".join([r.text for r in p.runs if r.text]).strip()
+                        if txt:
+                            slide_texts.append(txt)
+            cleaned = " ".join(" ".join(slide_texts).split())
+            pages.append({"page": slide_idx, "text": cleaned})
+    except Exception as e:
+        logger.error(f"Error parsing pptx presentation: {e}")
+    return pages
+
+
+def _extract_csv(file_bytes: bytes) -> str:
+    """Extracts structured rows from CSV data."""
+    try:
+        text_content = file_bytes.decode("utf-8", errors="replace")
+        reader = csv.reader(io.StringIO(text_content))
+        rows = list(reader)
+        if not rows:
+            return ""
+        header = rows[0]
+        lines = []
+        for row_idx, r in enumerate(rows[1:], start=1):
+            row_desc = ", ".join([f"{h.strip()}: {v.strip()}" for h, v in zip(header, r) if v.strip()])
+            if row_desc:
+                lines.append(f"Record {row_idx} ({row_desc})")
+        return ". ".join(lines)
+    except Exception as e:
+        logger.error(f"Error parsing CSV file: {e}")
+        return ""
+
+
+def _extract_xlsx(file_bytes: bytes) -> List[Dict[str, Any]]:
+    """Extracts sheets from Excel spreadsheet."""
+    pages = []
+    try:
+        import pandas as pd
+        excel_file = pd.ExcelFile(io.BytesIO(file_bytes))
+        for sheet_idx, sheet_name in enumerate(excel_file.sheet_names, start=1):
+            df = pd.read_excel(excel_file, sheet_name=sheet_name)
+            sheet_text = f"Sheet: {sheet_name}. " + df.to_string(index=False)
+            cleaned = " ".join(sheet_text.split())
+            pages.append({"page": sheet_idx, "text": cleaned})
+    except Exception as e:
+        logger.error(f"Error parsing xlsx workbook: {e}")
+    return pages
+
+
 def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Extracts text and page metadata from in-memory file bytes.
-    Supports PDF, TXT, and Markdown files.
+    Supports PDF, DOCX, PPTX, CSV, XLSX, TXT, and Markdown files.
     """
     ext = os.path.splitext(filename)[1].lower()
     pages = []
@@ -67,7 +149,9 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
         "page_count": 0,
         "char_count": 0,
         "failed_pages": 0,
-        "requires_ocr": False
+        "requires_ocr": False,
+        "file_type": ext.lstrip(".") or "unknown",
+        "summary_preview": ""
     }
 
     if ext == ".pdf":
@@ -92,6 +176,55 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
                     stats["failed_pages"] += 1
         except Exception as e:
             logger.error(f"Failed to parse PDF bytes for '{filename}': {e}")
+
+    elif ext == ".docx":
+        extracted_text = _extract_docx(file_bytes)
+        cleaned_text = " ".join(extracted_text.split())
+        stats["page_count"] = 1
+        stats["char_count"] = len(cleaned_text)
+        pages.append({
+            "document": filename,
+            "page": 1,
+            "text": cleaned_text
+        })
+
+    elif ext == ".pptx":
+        slide_pages = _extract_pptx(file_bytes)
+        stats["page_count"] = len(slide_pages)
+        for sp in slide_pages:
+            stats["char_count"] += len(sp["text"])
+            pages.append({
+                "document": filename,
+                "page": sp["page"],
+                "text": sp["text"]
+            })
+        if not pages:
+            pages.append({"document": filename, "page": 1, "text": ""})
+
+    elif ext == ".csv":
+        csv_text = _extract_csv(file_bytes)
+        cleaned_text = " ".join(csv_text.split())
+        stats["page_count"] = 1
+        stats["char_count"] = len(cleaned_text)
+        pages.append({
+            "document": filename,
+            "page": 1,
+            "text": cleaned_text
+        })
+
+    elif ext in [".xlsx", ".xls"]:
+        sheet_pages = _extract_xlsx(file_bytes)
+        stats["page_count"] = len(sheet_pages)
+        for sp in sheet_pages:
+            stats["char_count"] += len(sp["text"])
+            pages.append({
+                "document": filename,
+                "page": sp["page"],
+                "text": sp["text"]
+            })
+        if not pages:
+            pages.append({"document": filename, "page": 1, "text": ""})
+
     elif ext in [".txt", ".md", ".markdown"]:
         try:
             text = file_bytes.decode("utf-8", errors="replace")
@@ -106,7 +239,6 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
         except Exception as e:
             logger.error(f"Failed to decode text file '{filename}': {e}")
     else:
-        # Fallback raw decode
         text = file_bytes.decode("utf-8", errors="ignore")
         cleaned_text = " ".join(text.split())
         stats["page_count"] = 1
@@ -116,6 +248,11 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
             "page": 1,
             "text": cleaned_text
         })
+
+    # Generate document abstract / preview snippet
+    all_text = " ".join(p["text"] for p in pages if p.get("text"))
+    if all_text:
+        stats["summary_preview"] = all_text[:280] + ("..." if len(all_text) > 280 else "")
 
     return pages, stats
 
@@ -225,7 +362,10 @@ def index_uploaded_file(
         "document_name": filename,
         "pages": len(pages),
         "chunks_indexed": len(chunks),
-        "char_count": stats.get("char_count", 0)
+        "char_count": stats.get("char_count", 0),
+        "file_type": stats.get("file_type", "pdf"),
+        "requires_ocr": stats.get("requires_ocr", False),
+        "summary_preview": stats.get("summary_preview", "")
     }
 
 
@@ -236,10 +376,10 @@ def build_and_persist_vector_store(
     embedding_model_name: str = settings.EMBEDDING_MODEL_NAME
 ) -> Dict[str, Any]:
     """
-    Full pipeline to load raw documents (PDF, TXT, MD), chunk, compute embeddings, and persist to ChromaDB.
+    Full pipeline to load raw documents (PDF, DOCX, PPTX, CSV, XLSX, TXT, MD), chunk, compute embeddings, and persist to ChromaDB.
     """
     logger.info("=== Starting Data Ingestion Pipeline ===")
-    supported_extensions = ["*.pdf", "*.txt", "*.md"]
+    supported_extensions = ["*.pdf", "*.txt", "*.md", "*.markdown", "*.docx", "*.pptx", "*.csv", "*.xlsx"]
     doc_files = []
     for ext in supported_extensions:
         doc_files.extend(glob.glob(os.path.join(raw_data_dir, ext)))
