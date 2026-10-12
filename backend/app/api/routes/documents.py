@@ -196,7 +196,7 @@ async def get_analytics(request: Request):
         total_chunks=total_chunks,
         embedding_model=settings.EMBEDDING_MODEL_NAME,
         collection_name=settings.COLLECTION_NAME,
-        vector_store_path=os.path.abspath(settings.CHROMA_PATH),
+        vector_store_path=settings.CHROMA_PATH,
         documents=doc_stats,
         ollama_status={
             "available": ollama_ok,

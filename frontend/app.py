@@ -30,557 +30,585 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# Comprehensive Modern CSS (Cyber-Glassmorphism Design System)
+# Dynamic Theme Engine & Multi-Palette System
 # ---------------------------------------------------------
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+THEMES = {
+    "🌌 Cyber Midnight": {
+        "id": "cyber_dark",
+        "mode": "dark",
+        "desc": "Obsidian cyber-glassmorphism with neon indigo & purple glow",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 15% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 85% 15%, rgba(168, 85, 247, 0.16) 0%, transparent 60%), radial-gradient(ellipse 70% 50% at 50% 95%, rgba(6, 182, 212, 0.10) 0%, transparent 60%), linear-gradient(180deg, #07090e 0%, #0b0f19 50%, #06080e 100%)",
+        "bg_sidebar": "rgba(9, 13, 22, 0.96)",
+        "bg_hero": "linear-gradient(135deg, rgba(30, 41, 67, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%)",
+        "bg_card": "rgba(22, 30, 49, 0.72)",
+        "bg_card_hover": "rgba(30, 41, 67, 0.9)",
+        "bg_box": "rgba(15, 23, 42, 0.75)",
+        "bg_input": "rgba(15, 23, 42, 0.8)",
+        "border_glass": "rgba(255, 255, 255, 0.08)",
+        "border_accent": "rgba(99, 102, 241, 0.45)",
+        "text_primary": "#f8fafc",
+        "text_secondary": "#94a3b8",
+        "text_muted": "#64748b",
+        "accent_primary": "#6366f1",
+        "accent_secondary": "#8b5cf6",
+        "accent_highlight": "#06b6d4",
+        "hero_glow": "rgba(99, 102, 241, 0.45)",
+        "card_shadow": "0 20px 45px -12px rgba(0, 0, 0, 0.65)"
+    },
+    "☀️ Executive Daylight": {
+        "id": "clean_light",
+        "mode": "light",
+        "desc": "Crisp enterprise daylight palette with pure white cards and deep slate typography",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 15% -10%, rgba(99, 102, 241, 0.07) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 85% 15%, rgba(6, 182, 212, 0.07) 0%, transparent 60%), linear-gradient(180deg, #f8fafc 0%, #f1f5f9 60%, #e2e8f0 100%)",
+        "bg_sidebar": "rgba(248, 250, 252, 0.98)",
+        "bg_hero": "linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 245, 249, 0.92) 100%)",
+        "bg_card": "rgba(255, 255, 255, 0.95)",
+        "bg_card_hover": "#ffffff",
+        "bg_box": "rgba(241, 245, 249, 0.9)",
+        "bg_input": "#ffffff",
+        "border_glass": "rgba(203, 213, 225, 0.85)",
+        "border_accent": "rgba(99, 102, 241, 0.6)",
+        "text_primary": "#0f172a",
+        "text_secondary": "#334155",
+        "text_muted": "#64748b",
+        "accent_primary": "#4f46e5",
+        "accent_secondary": "#7c3aed",
+        "accent_highlight": "#0284c7",
+        "hero_glow": "rgba(99, 102, 241, 0.15)",
+        "card_shadow": "0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05)"
+    },
+    "🔮 Nebula Violet": {
+        "id": "nebula_violet",
+        "mode": "dark",
+        "desc": "Deep cosmic dark violet with radiant magenta and purple glassmorphism",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 20% -10%, rgba(168, 85, 247, 0.22) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 80% 20%, rgba(236, 72, 153, 0.18) 0%, transparent 60%), linear-gradient(180deg, #0c0517 0%, #130a24 50%, #090312 100%)",
+        "bg_sidebar": "rgba(14, 7, 26, 0.96)",
+        "bg_hero": "linear-gradient(135deg, rgba(45, 17, 85, 0.75) 0%, rgba(20, 8, 38, 0.9) 100%)",
+        "bg_card": "rgba(32, 14, 58, 0.72)",
+        "bg_card_hover": "rgba(45, 20, 82, 0.9)",
+        "bg_box": "rgba(24, 10, 44, 0.75)",
+        "bg_input": "rgba(24, 10, 44, 0.8)",
+        "border_glass": "rgba(216, 180, 254, 0.12)",
+        "border_accent": "rgba(192, 132, 252, 0.5)",
+        "text_primary": "#faf5ff",
+        "text_secondary": "#e9d5ff",
+        "text_muted": "#a855f7",
+        "accent_primary": "#a855f7",
+        "accent_secondary": "#ec4899",
+        "accent_highlight": "#f43f5e",
+        "hero_glow": "rgba(168, 85, 247, 0.5)",
+        "card_shadow": "0 20px 45px -12px rgba(168, 85, 247, 0.35)"
+    },
+    "🌲 Emerald Matrix": {
+        "id": "emerald_matrix",
+        "mode": "dark",
+        "desc": "Cyberpunk deep forest matrix with glowing mint & emerald cyber highlights",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 15% -10%, rgba(16, 185, 129, 0.20) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 85% 20%, rgba(6, 182, 212, 0.16) 0%, transparent 60%), linear-gradient(180deg, #03120e 0%, #061c16 50%, #020d0a 100%)",
+        "bg_sidebar": "rgba(4, 18, 14, 0.96)",
+        "bg_hero": "linear-gradient(135deg, rgba(6, 44, 34, 0.75) 0%, rgba(3, 24, 18, 0.9) 100%)",
+        "bg_card": "rgba(6, 36, 28, 0.72)",
+        "bg_card_hover": "rgba(9, 48, 38, 0.9)",
+        "bg_box": "rgba(4, 26, 20, 0.75)",
+        "bg_input": "rgba(4, 26, 20, 0.8)",
+        "border_glass": "rgba(110, 231, 183, 0.12)",
+        "border_accent": "rgba(52, 211, 153, 0.5)",
+        "text_primary": "#f0fdf4",
+        "text_secondary": "#bbf7d0",
+        "text_muted": "#4ade80",
+        "accent_primary": "#10b981",
+        "accent_secondary": "#06b6d4",
+        "accent_highlight": "#34d399",
+        "hero_glow": "rgba(16, 185, 129, 0.5)",
+        "card_shadow": "0 20px 45px -12px rgba(16, 185, 129, 0.35)"
+    },
+    "🌊 Nordic Glacier": {
+        "id": "nordic_glacier",
+        "mode": "dark",
+        "desc": "Frosty arctic midnight with luminous ice cyan & oceanic azure highlights",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 15% -10%, rgba(14, 165, 233, 0.22) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 85% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%), linear-gradient(180deg, #05101a 0%, #0a1b2b 50%, #040b12 100%)",
+        "bg_sidebar": "rgba(6, 16, 26, 0.96)",
+        "bg_hero": "linear-gradient(135deg, rgba(14, 43, 69, 0.75) 0%, rgba(7, 24, 39, 0.9) 100%)",
+        "bg_card": "rgba(10, 34, 54, 0.72)",
+        "bg_card_hover": "rgba(14, 46, 74, 0.9)",
+        "bg_box": "rgba(6, 25, 41, 0.75)",
+        "bg_input": "rgba(6, 25, 41, 0.8)",
+        "border_glass": "rgba(125, 211, 252, 0.14)",
+        "border_accent": "rgba(56, 189, 248, 0.5)",
+        "text_primary": "#f0f9ff",
+        "text_secondary": "#bae6fd",
+        "text_muted": "#38bdf8",
+        "accent_primary": "#0ea5e9",
+        "accent_secondary": "#6366f1",
+        "accent_highlight": "#38bdf8",
+        "hero_glow": "rgba(14, 165, 233, 0.5)",
+        "card_shadow": "0 20px 45px -12px rgba(14, 165, 233, 0.35)"
+    },
+    "🌅 Sunset Horizon": {
+        "id": "sunset_horizon",
+        "mode": "dark",
+        "desc": "Volcanic bronze espresso with glowing warm amber and coral gold radiance",
+        "bg_app": "radial-gradient(ellipse 90% 60% at 15% -10%, rgba(249, 115, 22, 0.20) 0%, transparent 60%), radial-gradient(ellipse 80% 50% at 85% 20%, rgba(239, 68, 68, 0.16) 0%, transparent 60%), linear-gradient(180deg, #130a06 0%, #1f100a 50%, #0d0604 100%)",
+        "bg_sidebar": "rgba(19, 10, 6, 0.96)",
+        "bg_hero": "linear-gradient(135deg, rgba(48, 22, 12, 0.75) 0%, rgba(27, 12, 7, 0.9) 100%)",
+        "bg_card": "rgba(38, 18, 10, 0.72)",
+        "bg_card_hover": "rgba(51, 24, 14, 0.9)",
+        "bg_box": "rgba(29, 13, 8, 0.75)",
+        "bg_input": "rgba(29, 13, 8, 0.8)",
+        "border_glass": "rgba(253, 186, 116, 0.12)",
+        "border_accent": "rgba(249, 115, 22, 0.5)",
+        "text_primary": "#fff7ed",
+        "text_secondary": "#fdba74",
+        "text_muted": "#fb923c",
+        "accent_primary": "#f97316",
+        "accent_secondary": "#ef4444",
+        "accent_highlight": "#fbbf24",
+        "hero_glow": "rgba(249, 115, 22, 0.5)",
+        "card_shadow": "0 20px 45px -12px rgba(249, 115, 22, 0.35)"
+    }
+}
 
-    :root {
-        --bg-main: #07090e;
-        --bg-card: rgba(22, 30, 49, 0.72);
-        --bg-card-hover: rgba(30, 41, 67, 0.88);
-        --border-glass: rgba(255, 255, 255, 0.08);
-        --border-accent: rgba(99, 102, 241, 0.45);
-        --accent-indigo: #6366f1;
-        --accent-violet: #8b5cf6;
-        --accent-cyan: #06b6d4;
-        --accent-emerald: #10b981;
-        --accent-amber: #f59e0b;
-        --accent-rose: #f43f5e;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-    }
+if "app_theme" not in st.session_state:
+    st.session_state.app_theme = "🌌 Cyber Midnight"
 
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+def get_theme_css(theme_name: str) -> str:
+    """Generates cohesive, uncorrupted CSS variables and styling overrides for the selected theme."""
+    t = THEMES.get(theme_name, THEMES["🌌 Cyber Midnight"])
+    return f"""<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-    h1, h2, h3, h4, h5, h6, .hero-title, .kpi-value, [data-testid="stMetricValue"] {
-        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        letter-spacing: -0.02em;
-    }
+:root {{
+    --bg-app: {t['bg_app']};
+    --bg-sidebar: {t['bg_sidebar']};
+    --bg-hero: {t['bg_hero']};
+    --bg-card: {t['bg_card']};
+    --bg-card-hover: {t['bg_card_hover']};
+    --bg-box: {t['bg_box']};
+    --bg-input: {t['bg_input']};
+    --border-glass: {t['border_glass']};
+    --border-accent: {t['border_accent']};
+    --text-primary: {t['text_primary']};
+    --text-secondary: {t['text_secondary']};
+    --text-muted: {t['text_muted']};
+    --accent-primary: {t['accent_primary']};
+    --accent-secondary: {t['accent_secondary']};
+    --accent-highlight: {t['accent_highlight']};
+    --hero-glow: {t['hero_glow']};
+    --card-shadow: {t['card_shadow']};
+}}
 
-    code, pre {
-        font-family: 'JetBrains Mono', monospace !important;
-    }
+html, body, [class*="css"] {{
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}}
 
-    .stApp {
-        background: 
-            radial-gradient(ellipse 90% 60% at 15% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
-            radial-gradient(ellipse 80% 50% at 85% 15%, rgba(168, 85, 247, 0.16) 0%, transparent 60%),
-            radial-gradient(ellipse 70% 50% at 50% 95%, rgba(6, 182, 212, 0.10) 0%, transparent 60%),
-            linear-gradient(180deg, #07090e 0%, #0b0f19 50%, #06080e 100%);
-        background-attachment: fixed;
-        color: var(--text-primary);
-    }
+h1, h2, h3, h4, h5, h6, .hero-title, .kpi-value, [data-testid="stMetricValue"] {{
+    font-family: 'Outfit', sans-serif !important;
+    letter-spacing: -0.02em;
+    color: {t['text_primary']} !important;
+}}
 
-    /* Custom Modern Scrollbars */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: rgba(15, 23, 42, 0.7);
-    }
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
-    }
+code, pre {{
+    font-family: 'JetBrains Mono', monospace !important;
+}}
 
-    /* Top Hero Studio Header Card */
-    .hero-container {
-        position: relative;
-        background: linear-gradient(135deg, rgba(30, 41, 67, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%);
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 24px;
-        padding: 32px 40px;
-        margin-bottom: 24px;
-        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        overflow: hidden;
-    }
+.stApp {{
+    background: {t['bg_app']} !important;
+    background-attachment: fixed !important;
+    color: {t['text_primary']} !important;
+}}
 
-    .hero-glow-orb {
-        position: absolute;
-        top: -80px;
-        right: -60px;
-        width: 280px;
-        height: 280px;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(168, 85, 247, 0.2) 60%, transparent 100%);
-        filter: blur(45px);
-        pointer-events: none;
-    }
+header[data-testid="stHeader"] {{
+    background: transparent !important;
+}}
 
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.5);
-        color: #c7d2fe;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.09em;
-        padding: 6px 16px;
-        border-radius: 30px;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
-    }
+section[data-testid="stSidebar"] {{
+    background: {t['bg_sidebar']} !important;
+    border-right: 1px solid {t['border_glass']} !important;
+    backdrop-filter: blur(20px) !important;
+}}
 
-    .hero-title {
-        font-size: 2.6rem;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 35%, #c084fc 70%, #f43f5e 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
-        line-height: 1.2;
-    }
+section[data-testid="stSidebar"] hr {{
+    border-color: {t['border_glass']} !important;
+}}
 
-    .hero-subtitle {
-        color: #94a3b8;
-        font-size: 1.05rem;
-        font-weight: 400;
-        line-height: 1.6;
-        max-width: 860px;
-    }
+section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{
+    color: {t['text_secondary']};
+}}
 
-    .hero-specs-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 20px;
-        padding-top: 18px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
+.stMarkdown p {{
+    color: {t['text_primary']};
+}}
 
-    .hero-spec-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.82rem;
-        color: #cbd5e1;
-        background: rgba(15, 23, 42, 0.65);
-        padding: 6px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px);
-    }
+/* Custom Scrollbars */
+::-webkit-scrollbar {{
+    width: 8px;
+    height: 8px;
+}}
+::-webkit-scrollbar-track {{
+    background: {t['bg_box']};
+}}
+::-webkit-scrollbar-thumb {{
+    background: {t['accent_primary']};
+    border-radius: 4px;
+}}
 
-    /* KPI Metric Cards */
-    .kpi-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-glass);
-        border-radius: 18px;
-        padding: 22px 24px;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-    .kpi-card:hover {
-        transform: translateY(-4px);
-        border-color: var(--border-accent);
-        box-shadow: 0 16px 35px -10px rgba(99, 102, 241, 0.35);
-    }
-    .kpi-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.7), transparent);
-        opacity: 0;
-        transition: opacity 0.25s ease;
-    }
-    .kpi-card:hover::before {
-        opacity: 1;
-    }
-    .kpi-label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-    }
-    .kpi-value {
-        font-size: 1.95rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin-top: 6px;
-        letter-spacing: -0.02em;
-    }
-    .kpi-subtext {
-        font-size: 0.78rem;
-        color: #64748b;
-        margin-top: 4px;
-    }
+/* Hero Container */
+.hero-container {{
+    position: relative;
+    background: {t['bg_hero']} !important;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 24px;
+    padding: 32px 40px;
+    margin-bottom: 24px;
+    box-shadow: {t['card_shadow']} !important;
+    overflow: hidden;
+}}
 
-    /* Citation Card Redesign */
-    .citation-card {
-        background: rgba(22, 30, 49, 0.65);
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        border-radius: 16px;
-        padding: 18px 22px;
-        margin-bottom: 12px;
-        backdrop-filter: blur(14px);
-        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .citation-card:hover {
-        border-color: rgba(99, 102, 241, 0.65);
-        transform: translateX(3px);
-        box-shadow: 0 8px 25px -8px rgba(99, 102, 241, 0.25);
-    }
-    .citation-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-    .citation-title {
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: #f1f5f9;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .citation-page-badge {
-        background: rgba(148, 163, 184, 0.12);
-        color: #cbd5e1;
-        padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .citation-conf-badge {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .conf-high {
-        background: rgba(16, 185, 129, 0.18);
-        color: #6ee7b7;
-        border: 1px solid rgba(16, 185, 129, 0.45);
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-    }
-    .conf-med {
-        background: rgba(245, 158, 11, 0.18);
-        color: #fcd34d;
-        border: 1px solid rgba(245, 158, 11, 0.45);
-    }
-    .conf-low {
-        background: rgba(239, 68, 68, 0.18);
-        color: #fca5a5;
-        border: 1px solid rgba(239, 68, 68, 0.45);
-    }
+.hero-glow-orb {{
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, {t['hero_glow']} 0%, transparent 70%);
+    filter: blur(45px);
+    pointer-events: none;
+}}
 
-    .citation-meter-bar {
-        width: 100%;
-        height: 5px;
-        background: rgba(15, 23, 42, 0.85);
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 12px;
-    }
-    .citation-meter-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);
-        border-radius: 4px;
-        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-    }
+.hero-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: {t['bg_box']};
+    border: 1px solid {t['border_accent']};
+    color: {t['accent_primary']};
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    padding: 6px 16px;
+    border-radius: 30px;
+    margin-bottom: 12px;
+}}
 
-    .citation-snippet-quote {
-        background: rgba(15, 23, 42, 0.55);
-        border-left: 3px solid #6366f1;
-        padding: 12px 16px;
-        border-radius: 0 10px 10px 0;
-        color: #cbd5e1;
-        font-size: 0.88rem;
-        line-height: 1.6;
-        font-style: italic;
-    }
+.hero-title {{
+    font-size: 2.6rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, {t['accent_primary']} 0%, {t['accent_secondary']} 50%, {t['accent_highlight']} 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}}
 
-    /* Diagnostics & Latency Pill */
-    .metric-pill-container {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-        margin-top: 12px;
-    }
-    .metric-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.78rem;
-        color: #cbd5e1;
-        background: rgba(15, 23, 42, 0.75);
-        padding: 5px 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+.hero-subtitle {{
+    color: {t['text_secondary']} !important;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.6;
+    max-width: 860px;
+}}
 
-    /* Suggestion Chips Section */
-    .chip-category-title {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
+.hero-specs-row {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid {t['border_glass']};
+}}
 
-    /* Streamlit Tab Bar Customization */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(15, 23, 42, 0.6);
-        padding: 8px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(16px);
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 12px;
-        padding: 10px 22px;
-        color: #94a3b8;
-        font-weight: 600;
-        font-size: 0.92rem;
-        font-family: 'Outfit', sans-serif !important;
-        transition: all 0.22s ease;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%) !important;
-        border: 1px solid rgba(99, 102, 241, 0.6) !important;
-        color: #ffffff !important;
-        font-weight: 700;
-        box-shadow: 0 6px 20px -4px rgba(99, 102, 241, 0.4);
-    }
+.hero-spec-item {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: {t['text_primary']} !important;
+    background: {t['bg_box']} !important;
+    padding: 6px 14px;
+    border-radius: 10px;
+    border: 1px solid {t['border_glass']} !important;
+    backdrop-filter: blur(10px);
+}}
 
-    /* Architecture Flow Box */
-    .arch-flow-box {
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 18px;
-        padding: 24px;
-        margin: 16px 0;
-        backdrop-filter: blur(16px);
-    }
-    .arch-step-badge {
-        display: inline-block;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: #fff;
-        text-align: center;
-        line-height: 28px;
-        font-weight: 800;
-        font-size: 0.8rem;
-        margin-right: 8px;
-        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
-    }
+/* KPI Metric Cards */
+.kpi-card {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 18px;
+    padding: 22px 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: {t['card_shadow']} !important;
+}}
+.kpi-card:hover {{
+    transform: translateY(-4px);
+    border-color: {t['border_accent']} !important;
+}}
+.kpi-card::before {{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, {t['accent_primary']}, transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}}
+.kpi-card:hover::before {{
+    opacity: 1;
+}}
+.kpi-label {{
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: {t['text_secondary']} !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}}
+.kpi-value {{
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: {t['text_primary']} !important;
+    margin-top: 6px;
+    letter-spacing: -0.02em;
+}}
+.kpi-subtext {{
+    font-size: 0.78rem;
+    color: {t['text_muted']} !important;
+    margin-top: 4px;
+}}
 
-    /* Streamlit Chat Messages Override */
-    .stChatMessage {
-        background-color: rgba(22, 30, 49, 0.45) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 18px !important;
-        padding: 18px 22px !important;
-        margin-bottom: 16px !important;
-        backdrop-filter: blur(16px) !important;
-        transition: border-color 0.2s ease !important;
-    }
-    .stChatMessage:hover {
-        border-color: rgba(99, 102, 241, 0.3) !important;
-    }
+/* Citation Cards */
+.citation-card {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(14px);
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}}
+.citation-card:hover {{
+    border-color: {t['border_accent']} !important;
+    transform: translateX(3px);
+}}
+.citation-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}}
+.citation-title {{
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: {t['text_primary']} !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}}
+.citation-page-badge {{
+    background: {t['bg_box']};
+    color: {t['text_primary']};
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid {t['border_glass']};
+}}
+.citation-meter-bar {{
+    width: 100%;
+    height: 5px;
+    background: {t['bg_box']};
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}}
+.citation-meter-fill {{
+    height: 100%;
+    background: linear-gradient(90deg, {t['accent_primary']}, {t['accent_highlight']}, #10b981);
+    border-radius: 4px;
+}}
+.citation-snippet-quote {{
+    background: {t['bg_box']} !important;
+    border-left: 3px solid {t['accent_primary']} !important;
+    padding: 12px 16px;
+    border-radius: 0 10px 10px 0;
+    color: {t['text_primary']} !important;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    font-style: italic;
+}}
 
-    /* Streamlit Buttons Polish */
-    .stButton > button {
-        font-family: 'Outfit', sans-serif !important;
-        font-weight: 600 !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        background: rgba(22, 30, 49, 0.7) !important;
-        color: #f1f5f9 !important;
-        backdrop-filter: blur(12px) !important;
-        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 4px 15px -4px rgba(0, 0, 0, 0.4) !important;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        border-color: rgba(99, 102, 241, 0.6) !important;
-        box-shadow: 0 6px 20px -2px rgba(99, 102, 241, 0.4) !important;
-        color: #ffffff !important;
-    }
-    .stButton > button:active {
-        transform: scale(0.98) !important;
-    }
-    .stButton > button[kind="primary"], button[data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%) !important;
-        border: 1px solid rgba(168, 85, 247, 0.5) !important;
-        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45) !important;
-        color: #ffffff !important;
-    }
-    .stButton > button[kind="primary"]:hover {
-        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.65) !important;
-    }
+/* Metrics and Pills */
+.metric-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: {t['text_primary']} !important;
+    background: {t['bg_box']} !important;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid {t['border_glass']} !important;
+}}
 
-    /* Chat Input Bar Override */
-    .stChatInputContainer {
-        background: rgba(15, 23, 42, 0.75) !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
-        border-radius: 20px !important;
-        backdrop-filter: blur(20px) !important;
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-        transition: all 0.25s ease !important;
-    }
-    .stChatInputContainer:focus-within {
-        border-color: rgba(139, 92, 246, 0.8) !important;
-        box-shadow: 0 10px 35px -5px rgba(99, 102, 241, 0.45), 0 0 0 2px rgba(139, 92, 246, 0.35) !important;
-    }
+/* Tabs Customization */
+.stTabs [data-baseweb="tab-list"] {{
+    gap: 8px;
+    background-color: {t['bg_box']} !important;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid {t['border_glass']} !important;
+    backdrop-filter: blur(16px);
+}}
+.stTabs [data-baseweb="tab"] {{
+    border-radius: 12px;
+    padding: 10px 22px;
+    color: {t['text_secondary']} !important;
+    font-weight: 600;
+    font-size: 0.92rem;
+    font-family: 'Outfit', sans-serif !important;
+    transition: all 0.22s ease;
+}}
+.stTabs [aria-selected="true"] {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_accent']} !important;
+    color: {t['text_primary']} !important;
+    font-weight: 700;
+    box-shadow: 0 6px 20px -4px {t['border_accent']} !important;
+}}
 
-    /* Sidebar Glassmorphic Override */
-    section[data-testid="stSidebar"] {
-        background: rgba(9, 13, 22, 0.88) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(20px) !important;
-    }
-    section[data-testid="stSidebar"] hr {
-        border-color: rgba(255, 255, 255, 0.08) !important;
-    }
+/* Chat Messages */
+.stChatMessage {{
+    background-color: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 18px !important;
+    padding: 18px 22px !important;
+    margin-bottom: 16px !important;
+    backdrop-filter: blur(16px) !important;
+    color: {t['text_primary']} !important;
+}}
 
-    /* Form Controls & Inputs */
-    div[data-baseweb="select"] > div {
-        background-color: rgba(15, 23, 42, 0.7) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-    }
-    input[type="text"], input[type="number"], textarea {
-        background-color: rgba(15, 23, 42, 0.7) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        color: #f1f5f9 !important;
-    }
-    input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
-        border-color: rgba(99, 102, 241, 0.7) !important;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
-    }
+/* Buttons */
+.stButton > button {{
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    border: 1px solid {t['border_glass']} !important;
+    background: {t['bg_card']} !important;
+    color: {t['text_primary']} !important;
+    backdrop-filter: blur(12px) !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}}
+.stButton > button:hover {{
+    transform: translateY(-2px) !important;
+    border-color: {t['accent_primary']} !important;
+    color: {t['text_primary']} !important;
+}}
+.stButton > button[kind="primary"], button[data-testid="baseButton-primary"] {{
+    background: linear-gradient(135deg, {t['accent_primary']} 0%, {t['accent_secondary']} 100%) !important;
+    border: 1px solid {t['accent_primary']} !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 20px {t['border_accent']} !important;
+}}
 
-    /* Expander Styling */
-    div[data-testid="stExpander"] {
-        background: rgba(15, 23, 42, 0.55) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 14px !important;
-        overflow: hidden;
-    }
-    div[data-testid="stExpander"] summary {
-        font-weight: 600;
-        color: #cbd5e1;
-    }
-    div[data-testid="stExpander"] summary:hover {
-        color: #ffffff;
-    }
+/* Chat Input Container */
+.stChatInputContainer {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(20px) !important;
+}}
 
-    /* Metrics Modern Styling */
-    div[data-testid="stMetric"] {
-        background: rgba(22, 30, 49, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 14px;
-        padding: 14px 18px;
-        backdrop-filter: blur(12px);
-        transition: all 0.2s ease;
-    }
-    div[data-testid="stMetric"]:hover {
-        border-color: rgba(99, 102, 241, 0.35);
-        transform: translateY(-2px);
-    }
-    [data-testid="stMetricLabel"] {
-        color: #94a3b8 !important;
-        font-size: 0.8rem !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    [data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-    }
+/* Inputs & Form Controls */
+div[data-baseweb="select"] > div {{
+    background-color: {t['bg_input']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 12px !important;
+    color: {t['text_primary']} !important;
+}}
+div[data-baseweb="select"] span {{
+    color: {t['text_primary']} !important;
+}}
+div[data-baseweb="popover"], ul[role="listbox"] {{
+    background-color: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+}}
+li[role="option"] {{
+    color: {t['text_primary']} !important;
+}}
+li[role="option"]:hover {{
+    background-color: {t['bg_card_hover']} !important;
+}}
+input[type="text"], input[type="number"], textarea {{
+    background-color: {t['bg_input']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 12px !important;
+    color: {t['text_primary']} !important;
+}}
 
-    /* Custom Toast / Notification Styling */
-    div[data-testid="stNotification"] {
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(16px);
-    }
+/* Expanders & Metrics */
+div[data-testid="stExpander"] {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 14px !important;
+}}
+div[data-testid="stExpander"] summary {{
+    font-weight: 600;
+    color: {t['text_primary']} !important;
+}}
+div[data-testid="stMetric"] {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 14px;
+    padding: 14px 18px;
+}}
+[data-testid="stMetricLabel"] {{
+    color: {t['text_secondary']} !important;
+}}
+[data-testid="stMetricValue"] {{
+    color: {t['text_primary']} !important;
+}}
 
-    /* Agentic Reasoning Trace Cards */
-    .agentic-trace-card {
-        background: linear-gradient(135deg, rgba(30, 27, 75, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.35);
-        border-radius: 16px;
-        padding: 16px 20px;
-        margin: 14px 0;
-        box-shadow: 0 8px 24px -6px rgba(139, 92, 246, 0.2);
-        backdrop-filter: blur(16px);
-    }
-    .agentic-step-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(139, 92, 246, 0.15);
-        border: 1px solid rgba(139, 92, 246, 0.4);
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #d8b4fe;
-    }
+.arch-flow-box {{
+    background: {t['bg_box']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 18px;
+    padding: 24px;
+    color: {t['text_primary']} !important;
+}}
 
-    /* Document & PDF Viewer Styles */
-    .viewer-page-box {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 24px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        line-height: 1.7;
-        font-size: 0.95rem;
-        color: #f1f5f9;
-        max-height: 680px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-    }
-    .viewer-page-highlight {
-        background: rgba(245, 158, 11, 0.32);
-        border-bottom: 2px solid #f59e0b;
-        color: #fef08a;
-        padding: 2px 4px;
-        border-radius: 4px;
-        font-weight: 600;
-    }
-</style>
-""", unsafe_allow_html=True)
+.viewer-page-box {{
+    background: {t['bg_card']} !important;
+    border: 1px solid {t['border_glass']} !important;
+    border-radius: 16px;
+    padding: 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    color: {t['text_primary']} !important;
+    max-height: 680px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}}
+
+code {{
+    background: {t['bg_box']} !important;
+    color: {t['accent_highlight'] if t['mode'] == 'dark' else '#0369a1'} !important;
+    border-radius: 4px;
+    padding: 2px 6px;
+}}
+</style>"""
+
+st.markdown(get_theme_css(st.session_state.app_theme), unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # Session State Initialization & Presets
@@ -802,6 +830,17 @@ def render_agentic_reasoning_trace(reasoning_steps: List[Dict[str, Any]], intent
 
 def render_ragas_radar_svg(metrics: Dict[str, float], overall_score: float) -> str:
     """Renders a responsive, glowing Cyber-Glassmorphic SVG Radar/Spider Chart for the Ragas Triad."""
+    curr_theme = THEMES.get(st.session_state.get("app_theme", "🌌 Cyber Midnight"), THEMES["🌌 Cyber Midnight"])
+    is_light = curr_theme.get("mode") == "light"
+
+    txt_fill = "#0f172a" if is_light else "#f8fafc"
+    grid_stroke = "rgba(0, 0, 0, 0.16)" if is_light else "rgba(255, 255, 255, 0.12)"
+    axis_stroke = "rgba(0, 0, 0, 0.20)" if is_light else "rgba(255, 255, 255, 0.15)"
+    center_fill = "rgba(255, 255, 255, 0.95)" if is_light else "rgba(15, 23, 42, 0.9)"
+    center_sub = "#64748b" if is_light else "#94a3b8"
+    center_val = "#059669" if is_light else "#6ee7b7"
+    badge_stroke = curr_theme.get("border_accent", "rgba(99, 102, 241, 0.4)")
+
     axes = [
         ("Faithfulness", metrics.get("Faithfulness", 94.0), "#10b981"),
         ("Answer Relevance", metrics.get("Answer Relevance", 91.5), "#6366f1"),
@@ -820,8 +859,8 @@ def render_ragas_radar_svg(metrics: Dict[str, float], overall_score: float) -> s
             px = cx + r * lvl * math.cos(angle)
             py = cy + r * lvl * math.sin(angle)
             pts.append(f"{px:.1f},{py:.1f}")
-        grid_svg.append(f'<polygon points="{" ".join(pts)}" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-dasharray="3,3" stroke-width="1.2"/>')
-        grid_svg.append(f'<text x="{cx + 5}" y="{cy - r * lvl + 12}" fill="rgba(148, 163, 184, 0.55)" font-size="9" font-family="Outfit, sans-serif">{int(lvl*100)}%</text>')
+        grid_svg.append(f'<polygon points="{" ".join(pts)}" fill="none" stroke="{grid_stroke}" stroke-dasharray="3,3" stroke-width="1.2"/>')
+        grid_svg.append(f'<text x="{cx + 5}" y="{cy - r * lvl + 12}" fill="{center_sub}" font-size="9" font-family="Outfit, sans-serif">{int(lvl*100)}%</text>')
 
     axis_lines = []
     labels_svg = []
@@ -832,28 +871,19 @@ def render_ragas_radar_svg(metrics: Dict[str, float], overall_score: float) -> s
         angle = -math.pi / 2 + (2 * math.pi * i / n)
         end_x = cx + r * math.cos(angle)
         end_y = cy + r * math.sin(angle)
-        axis_lines.append(f'<line x1="{cx}" y1="{cy}" x2="{end_x:.1f}" y2="{end_y:.1f}" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2"/>')
+        axis_lines.append(f'<line x1="{cx}" y1="{cy}" x2="{end_x:.1f}" y2="{end_y:.1f}" stroke="{axis_stroke}" stroke-width="1.2"/>')
 
         lbl_r = r + 38
         lx = cx + lbl_r * math.cos(angle)
         ly = cy + lbl_r * math.sin(angle)
         anchor = "middle" if abs(math.cos(angle)) < 0.3 else ("start" if math.cos(angle) > 0 else "end")
-        labels_svg.append(f'''
-        <g>
-            <text x="{lx:.1f}" y="{ly - 4:.1f}" text-anchor="{anchor}" fill="#f8fafc" font-family="Outfit, sans-serif" font-size="12" font-weight="700">{name}</text>
-            <text x="{lx:.1f}" y="{ly + 11:.1f}" text-anchor="{anchor}" fill="{color}" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">{val:.1f}%</text>
-        </g>
-        ''')
+        labels_svg.append(f'<g><text x="{lx:.1f}" y="{ly - 4:.1f}" text-anchor="{anchor}" fill="{txt_fill}" font-family="Outfit, sans-serif" font-size="12" font-weight="700">{name}</text><text x="{lx:.1f}" y="{ly + 11:.1f}" text-anchor="{anchor}" fill="{color}" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600">{val:.1f}%</text></g>')
 
         norm = max(0.05, min(100.0, float(val))) / 100.0
         dx = cx + r * norm * math.cos(angle)
         dy = cy + r * norm * math.sin(angle)
         data_pts.append(f"{dx:.1f},{dy:.1f}")
-        markers_svg.append(f'''
-        <circle cx="{dx:.1f}" cy="{dy:.1f}" r="5.5" fill="#ffffff" stroke="{color}" stroke-width="2.5">
-            <animate attributeName="r" values="5.5;7;5.5" dur="3s" repeatCount="indefinite"/>
-        </circle>
-        ''')
+        markers_svg.append(f'<circle cx="{dx:.1f}" cy="{dy:.1f}" r="5.5" fill="#ffffff" stroke="{color}" stroke-width="2.5"><animate attributeName="r" values="5.5;7;5.5" dur="3s" repeatCount="indefinite"/></circle>')
 
     data_poly_str = " ".join(data_pts)
     grid_str = "".join(grid_svg)
@@ -861,35 +891,29 @@ def render_ragas_radar_svg(metrics: Dict[str, float], overall_score: float) -> s
     markers_str = "".join(markers_svg)
     labels_str = "".join(labels_svg)
 
-    svg_content = f'''<svg viewBox="0 0 420 370" width="100%" height="350" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));">
-        <defs>
-            <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#10b981" stop-opacity="0.45"/>
-                <stop offset="50%" stop-color="#6366f1" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="#a855f7" stop-opacity="0.45"/>
-            </linearGradient>
-            <filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-            </filter>
-        </defs>
-        
-        <!-- Center badge -->
-        <circle cx="{cx}" cy="{cy}" r="25" fill="rgba(15, 23, 42, 0.9)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="1.5"/>
-        <text x="{cx}" y="{cy - 3}" text-anchor="middle" fill="#94a3b8" font-family="Outfit, sans-serif" font-size="8" font-weight="600">OVERALL</text>
-        <text x="{cx}" y="{cy + 11}" text-anchor="middle" fill="#6ee7b7" font-family="Outfit, sans-serif" font-size="13" font-weight="800">{overall_score:.0f}%</text>
-
-        <!-- Grid -->
-        {grid_str}
-        {axis_str}
-
-        <!-- Data Polygon -->
-        <polygon points="{data_poly_str}" fill="url(#radarGrad)" stroke="#6ee7b7" stroke-width="2.5" filter="url(#radarGlow)"/>
-
-        <!-- Markers and Labels -->
-        {markers_str}
-        {labels_str}
-    </svg>'''
+    svg_content = (
+        f'<svg viewBox="0 0 420 370" width="100%" height="350" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));">'
+        f'<defs>'
+        f'<linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="#10b981" stop-opacity="0.45"/>'
+        f'<stop offset="50%" stop-color="#6366f1" stop-opacity="0.35"/>'
+        f'<stop offset="100%" stop-color="#a855f7" stop-opacity="0.45"/>'
+        f'</linearGradient>'
+        f'<filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">'
+        f'<feGaussianBlur stdDeviation="4" result="blur"/>'
+        f'<feComposite in="SourceGraphic" in2="blur" operator="over"/>'
+        f'</filter>'
+        f'</defs>'
+        f'<circle cx="{cx}" cy="{cy}" r="25" fill="{center_fill}" stroke="{badge_stroke}" stroke-width="1.5"/>'
+        f'<text x="{cx}" y="{cy - 3}" text-anchor="middle" fill="{center_sub}" font-family="Outfit, sans-serif" font-size="8" font-weight="600">OVERALL</text>'
+        f'<text x="{cx}" y="{cy + 11}" text-anchor="middle" fill="{center_val}" font-family="Outfit, sans-serif" font-size="13" font-weight="800">{overall_score:.0f}%</text>'
+        f'{grid_str}'
+        f'{axis_str}'
+        f'<polygon points="{data_poly_str}" fill="url(#radarGrad)" stroke="#6ee7b7" stroke-width="2.5" filter="url(#radarGlow)"/>'
+        f'{markers_str}'
+        f'{labels_str}'
+        f'</svg>'
+    )
     return svg_content
 
 # ---------------------------------------------------------
@@ -910,11 +934,26 @@ with st.sidebar:
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
         <span style="font-size: 2.2rem;">📚</span>
         <div>
-            <div style="font-weight: 800; font-size: 1.15rem; color: #f8fafc; letter-spacing: -0.01em;">RAG Assistant</div>
-            <div style="font-size: 0.76rem; color: #94a3b8; font-weight: 600;">ENTERPRISE STUDIO PRO</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-primary); letter-spacing: -0.01em;">RAG Assistant</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary); font-weight: 600;">ENTERPRISE STUDIO PRO</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Dynamic Studio Theme Selector
+    st.markdown("##### 🎨 Studio Appearance & Theme")
+    theme_names = list(THEMES.keys())
+    selected_theme = st.selectbox(
+        "Active Theme",
+        options=theme_names,
+        index=theme_names.index(st.session_state.app_theme) if st.session_state.app_theme in theme_names else 0,
+        help="Switch on-the-fly between curated dark, light, and vibrant cyber aesthetics.",
+        key="sidebar_theme_picker",
+        label_visibility="collapsed"
+    )
+    if selected_theme != st.session_state.app_theme:
+        st.session_state.app_theme = selected_theme
+        st.rerun()
 
     # Real-Time Service Status Badges
     st.markdown("##### 🛰️ System Status")
@@ -1910,6 +1949,36 @@ with tab_settings:
     st.markdown(f"**Active Mode:** `{st.session_state.prompt_mode.capitalize()}`")
     st.info(f"📋 **Injected System Persona Directive:**\n\n\"{persona_templates.get(st.session_state.prompt_mode, '')}\"")
 
+    st.markdown("---")
+    st.markdown("#### 🎨 Visual Studio Themes & Appearance Customizer")
+    st.markdown("Choose your preferred aesthetic workspace theme. Themes dynamically calibrate page backgrounds, cards, typography, and charts.")
+
+    th_cols = st.columns(3)
+    for idx, (t_name, t_meta) in enumerate(THEMES.items()):
+        col = th_cols[idx % 3]
+        with col:
+            is_active = (st.session_state.app_theme == t_name)
+            border_col = t_meta["accent_primary"] if is_active else t_meta["border_glass"]
+            st.markdown(
+                f'<div class="kpi-card" style="padding: 16px 18px; margin-bottom: 12px; border: 2px solid {border_col};">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+                f'<span style="font-weight: 800; font-size: 0.95rem;">{t_name}</span>'
+                f'<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: {t_meta["accent_primary"]}; color: #ffffff; font-weight: 700;">{t_meta["mode"].upper()}</span>'
+                f'</div>'
+                f'<div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">{t_meta["desc"]}</div>'
+                f'<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">'
+                f'<div style="width: 22px; height: 22px; border-radius: 50%; background: {t_meta["accent_primary"]}; box-shadow: 0 0 6px {t_meta["accent_primary"]};" title="Primary Accent"></div>'
+                f'<div style="width: 22px; height: 22px; border-radius: 50%; background: {t_meta["accent_secondary"]};" title="Secondary Accent"></div>'
+                f'<div style="width: 22px; height: 22px; border-radius: 50%; background: {t_meta["bg_card"]}; border: 1px solid rgba(255,255,255,0.25);" title="Card Background"></div>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            btn_label = f"✅ Active" if is_active else f"Activate {t_name.split()[1]}"
+            if st.button(btn_label, key=f"btn_theme_settings_{idx}", use_container_width=True, disabled=is_active):
+                st.session_state.app_theme = t_name
+                st.rerun()
+
 
 # =========================================================
 # TAB 5: Analytics & Performance Insights
@@ -2074,63 +2143,89 @@ with tab_analytics:
             with col_radar:
                 st.markdown("##### 🕸️ Multidimensional Triad Radar Chart")
                 radar_html = render_ragas_radar_svg(m, overall_val)
-                st.markdown(radar_html, unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center; overflow: hidden;'>{radar_html}</div>", unsafe_allow_html=True)
 
             with col_card:
                 st.markdown("##### 🔬 Grounding Health & Production Readiness")
-                
-                def render_metric_bar(name: str, score: float, color: str):
-                    return f"""
-                    <div style="margin-bottom: 14px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">
-                            <span>{name}</span>
-                            <span style="color: {color}; font-family: 'JetBrains Mono', monospace;">{score:.1f}%</span>
-                        </div>
-                        <div style="width: 100%; height: 6px; background: rgba(15, 23, 42, 0.8); border-radius: 4px; overflow: hidden;">
-                            <div style="width: {score}%; height: 100%; background: {color}; border-radius: 4px; box-shadow: 0 0 10px {color};"></div>
-                        </div>
-                    </div>
-                    """
 
-                bars_html = render_metric_bar("Grounding Faithfulness", m.get("Faithfulness", 0), "#10b981")
-                bars_html += render_metric_bar("Answer Relevance", m.get("Answer Relevance", 0), "#6366f1")
-                bars_html += render_metric_bar("Context Precision", m.get("Context Precision", 0), "#06b6d4")
-                bars_html += render_metric_bar("Context Recall", m.get("Context Recall", 0), "#a855f7")
+                def render_metric_bar(name: str, score: float, color: str) -> str:
+                    return (
+                        f'<div style="margin-bottom: 14px;">'
+                        f'<div style="display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">'
+                        f'<span>{name}</span>'
+                        f'<span style="color: {color}; font-family: \'JetBrains Mono\', monospace;">{score:.1f}%</span>'
+                        f'</div>'
+                        f'<div style="width: 100%; height: 6px; background: rgba(15, 23, 42, 0.8); border-radius: 4px; overflow: hidden;">'
+                        f'<div style="width: {score}%; height: 100%; background: {color}; border-radius: 4px; box-shadow: 0 0 10px {color};"></div>'
+                        f'</div>'
+                        f'</div>'
+                    )
 
-                st.markdown(f"""
-                <div class="kpi-card" style="padding: 22px 24px; margin-top: 10px;">
-                    {bars_html}
-                    <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 12px 16px; margin-top: 18px;">
-                        <div style="font-size: 0.84rem; font-weight: 800; color: #6ee7b7; display: flex; align-items: center; gap: 6px;">
-                            <span>🟢 PRODUCTION-GRADE BENCHMARK</span>
-                        </div>
-                        <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 5px; line-height: 1.5;">
-                            <b>+28.4% Precision Uplift</b> achieved over naive RAG baseline. Cross-Encoder joint attention effectively filters negative semantic chunks.
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                bars_html = "".join([
+                    render_metric_bar("Grounding Faithfulness", m.get("Faithfulness", 0), "#10b981"),
+                    render_metric_bar("Answer Relevance", m.get("Answer Relevance", 0), "#6366f1"),
+                    render_metric_bar("Context Precision", m.get("Context Precision", 0), "#06b6d4"),
+                    render_metric_bar("Context Recall", m.get("Context Recall", 0), "#a855f7")
+                ])
+
+                card_html = (
+                    f'<div class="kpi-card" style="padding: 22px 24px; margin-top: 10px;">'
+                    f'{bars_html}'
+                    f'<div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 12px 16px; margin-top: 18px;">'
+                    f'<div style="font-size: 0.84rem; font-weight: 800; color: #6ee7b7; display: flex; align-items: center; gap: 6px;">'
+                    f'<span>🟢 PRODUCTION-GRADE BENCHMARK</span>'
+                    f'</div>'
+                    f'<div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 5px; line-height: 1.5;">'
+                    f'<b>+28.4% Precision Uplift</b> achieved over naive RAG baseline. Cross-Encoder joint attention effectively filters negative semantic chunks.'
+                    f'</div>'
+                    f'</div>'
+                    f'</div>'
+                )
+                st.markdown(card_html, unsafe_allow_html=True)
 
             # Sample Breakdown Expander
             with st.expander("📋 View Benchmark Sample Breakdown (10 Grounded Baseline Queries)"):
                 st.dataframe(pd.DataFrame(ragas_data.get("sample_breakdown", [])), use_container_width=True)
 
         st.markdown("---")
-        st.markdown("#### 🏛️ System Runtime Architecture Matrix")
-        col_srv1, col_srv2 = st.columns(2)
-        with col_srv1:
-            st.write("**Vector Store Persistent Path:**")
-            st.code(an_data.get("vector_store_path", "N/A"))
-            st.write("**ChromaDB Collection Identifier:**")
-            st.code(an_data.get("collection_name", "rag_documents"))
-        with col_srv2:
-            st.write("**Ollama Daemon Endpoint:**")
-            st.code(ollama_status.get("host", "http://localhost:11434"))
-            models_list = ollama_status.get("available_models", [])
-            if models_list:
-                st.write(f"**Detected Local Models ({len(models_list)}):** {', '.join(models_list)}")
+        with st.expander("🛠️ Advanced System Diagnostics & Runtime Architecture Matrix", expanded=False):
+            st.caption("Low-level infrastructure parameters and service connectivity diagnostics.")
+
+            raw_v_path = str(an_data.get("vector_store_path", "./data/vector_store"))
+            if "vector_store" in raw_v_path.lower():
+                clean_path = "./backend/data/vector_store"
             else:
-                st.caption("No models detected or daemon offline (Extractive fallback active).")
+                clean_path = raw_v_path
+
+            coll_id = str(an_data.get("collection_name", "rag_documents"))
+            is_ollama = bool(ollama_status.get("available", False))
+            host_url = str(ollama_status.get("host", "http://localhost:11434"))
+            models_list = ollama_status.get("available_models", [])
+            models_str = ", ".join(models_list) if models_list else "Extractive fallback active"
+
+            col_srv1, col_srv2 = st.columns(2)
+            with col_srv1:
+                st.markdown(
+                    f'<div class="kpi-card" style="padding: 16px 20px; margin-top: 6px;">'
+                    f'<div style="font-size: 0.76rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">🗄️ Vector Store Engine</div>'
+                    f'<div style="font-size: 0.95rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">🟢 ChromaDB (Embedded Persistent)</div>'
+                    f'<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;"><b>Portable Path:</b> <code style="color: #67e8f9; background: rgba(15,23,42,0.8); padding: 2px 6px; border-radius: 4px;">{clean_path}</code></div>'
+                    f'<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;"><b>Collection:</b> <code style="color: #a78bfa; background: rgba(15,23,42,0.8); padding: 2px 6px; border-radius: 4px;">{coll_id}</code></div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            with col_srv2:
+                status_color = "#10b981" if is_ollama else "#f59e0b"
+                status_badge = "🟢 Connected & Ready" if is_ollama else "🟡 Extractive Fallback Mode"
+                st.markdown(
+                    f'<div class="kpi-card" style="padding: 16px 20px; margin-top: 6px;">'
+                    f'<div style="font-size: 0.76rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">🧠 Local LLM Inference Daemon</div>'
+                    f'<div style="font-size: 0.95rem; font-weight: 700; color: {status_color}; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">{status_badge}</div>'
+                    f'<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;"><b>Endpoint:</b> <code style="color: #cbd5e1; background: rgba(15,23,42,0.8); padding: 2px 6px; border-radius: 4px;">{host_url}</code></div>'
+                    f'<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;"><b>Detected Models:</b> <code style="color: #34d399; background: rgba(15,23,42,0.8); padding: 2px 6px; border-radius: 4px;">{models_str}</code></div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
     else:
         st.warning("⚠️ Could not fetch analytics from backend API. Ensure the FastAPI server is running.")
 
