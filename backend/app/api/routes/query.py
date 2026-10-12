@@ -9,7 +9,11 @@ from app.schemas.query import (
     CompareDocumentsResponse
 )
 from app.services.retrieval import retrieve_context, get_indexed_documents_stats
-from app.services.generation import generate_grounded_answer, check_ollama_availability
+from app.services.generation import (
+    generate_grounded_answer,
+    check_ollama_availability,
+    is_off_topic_or_ungrounded_answer
+)
 from app.services.agentic_rag import execute_agentic_rag, execute_multi_document_comparison
 from app.utils.logging_config import logger
 from app.core.config import settings
@@ -164,6 +168,11 @@ async def query_documents(payload: QueryRequest, request: Request):
     )
     generation_latency = (time.perf_counter() - start_gen) * 1000.0
     total_latency = (time.perf_counter() - start_total) * 1000.0
+
+    # Suppress citations if answer is off-topic, ungrounded, or all sources are low-confidence noise
+    if is_off_topic_or_ungrounded_answer(answer) or (sources and all((s.confidence_percent or 0.0) < 30.0 for s in sources)):
+        logger.info(f"Query '{question}' answered as off-topic or ungrounded. Suppressing source references.")
+        sources = []
 
     return QueryResponse(
         answer=answer,

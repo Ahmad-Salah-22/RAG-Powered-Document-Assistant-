@@ -4,7 +4,7 @@ import time
 from typing import List, Dict, Any, Tuple, Optional
 from app.schemas.query import SourceItem, AgenticReasoningStep
 from app.services.retrieval import retrieve_context
-from app.services.generation import generate_grounded_answer
+from app.services.generation import generate_grounded_answer, is_off_topic_or_ungrounded_answer
 from app.utils.logging_config import logger
 from app.core.config import settings
 
@@ -105,27 +105,28 @@ def grade_context_relevance(
         }
 
     confidences = [s.confidence_percent if s.confidence_percent is not None else 60.0 for s in sources]
-    avg_conf = sum(confidences) / len(confidences)
+    avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
 
-    # Filter out chunks that fall well below threshold
-    graded_sources = [s for s in sources if (s.confidence_percent or 60.0) >= 45.0]
+    # Filter out chunks that fall well below threshold (e.g. < 40% confidence)
+    graded_sources = [s for s in sources if (s.confidence_percent or 0.0) >= 40.0]
     relevant_count = len(graded_sources)
 
     is_sufficient = avg_conf >= threshold and relevant_count > 0
 
     if is_sufficient:
         assessment = f"Context graded as HIGH QUALITY (Avg confidence: {avg_conf:.1f}% across {relevant_count} chunks). Passing to grounded generator."
-    elif relevant_count > 0:
+    elif relevant_count > 0 and avg_conf >= 35.0:
         assessment = f"Context graded as PARTIALLY SUFFICIENT (Avg confidence: {avg_conf:.1f}%). Supplemental corrective context applied."
     else:
-        assessment = "Context graded as LOW RELEVANCE. Warning: Chunks do not adequately match query intent."
+        assessment = f"Context graded as LOW RELEVANCE / OFF-TOPIC (Avg confidence: {avg_conf:.1f}%). Warning: Chunks do not match query intent."
+        graded_sources = []  # Explicitly clear chunks for off-topic questions
 
     return {
         "average_confidence": round(avg_conf, 1),
         "is_sufficient": is_sufficient,
-        "relevant_count": relevant_count,
+        "relevant_count": len(graded_sources),
         "grading_assessment": assessment,
-        "filtered_sources": graded_sources if graded_sources else sources
+        "filtered_sources": graded_sources
     }
 
 
@@ -245,6 +246,10 @@ async def execute_agentic_rag(
     grading = grade_context_relevance(question, all_sources, threshold=60.0)
     final_sources = grading["filtered_sources"][:top_k + 2]
 
+    # If context is graded as off-topic or insufficient, suppress sources early
+    if not grading["is_sufficient"] and grading["relevant_count"] == 0:
+        final_sources = []
+
     reasoning_steps.append(AgenticReasoningStep(
         step_number=3,
         phase="Self-Reflection & Corrective Grading (CRAG)",
@@ -281,17 +286,27 @@ async def execute_agentic_rag(
     generation_latency = (time.perf_counter() - t_gen_start) * 1000.0
     total_latency = (time.perf_counter() - t_start) * 1000.0
 
+    # CRITICAL: If the answer indicates off-topic/ungrounded or if no relevant context passed grading, suppress ALL citations!
+    if not final_sources or is_off_topic_or_ungrounded_answer(answer):
+        final_sources = []
+        step_title = "Off-Topic Query Verified"
+        step_desc = "Detected off-topic or ungrounded question. Answered without citing irrelevant document references."
+    else:
+        step_title = "Verified Generation Completed"
+        step_desc = "Synthesized final grounded response with strict source grounding and citation cross-verification."
+
     reasoning_steps.append(AgenticReasoningStep(
         step_number=4,
         phase="Grounded Fact-Checked Synthesis",
         status="success",
-        title="Verified Generation Completed",
-        description="Synthesized final grounded response with strict source grounding and citation cross-verification.",
+        title=step_title,
+        description=step_desc,
         details={
             "generation_latency_ms": round(generation_latency, 2),
             "total_latency_ms": round(total_latency, 2),
             "fallback_used": fallback_used,
-            "model_used": ollama_model if not fallback_used else "Extractive Fallback"
+            "model_used": ollama_model if not fallback_used else "Extractive Fallback",
+            "references_suppressed": len(final_sources) == 0
         }
     ))
 
@@ -350,8 +365,8 @@ async def execute_multi_document_comparison(
     )
 
     combined_context = (
-        f"=== CONTEXT FROM DOCUMENT A: {doc_a} ===\n{context_a}\n\n"
-        f"=== CONTEXT FROM DOCUMENT B: {doc_b} ===\n{context_b}"
+        f"=== Context from Document A: {doc_a} ===\n{context_a}\n\n"
+        f"=== Context from Document B: {doc_b} ===\n{context_b}"
     )
 
     prompt = f"""You are an Expert Technical Analyst specializing in comparative document analysis.
@@ -366,9 +381,11 @@ Your output MUST include:
 3. **Synthesis & Recommended Takeaway**.
 4. Strict citations format: [{doc_a}, Page X] or [{doc_b}, Page X].
 
+Write in professional, clear, readable sentences without unnecessary ALL-CAPS words or shouting.
+
 {combined_context}
 
-COMPARATIVE ANALYSIS AND MATRIX:"""
+Comparative Analysis and Matrix:"""
 
     answer, success, fallback_used = await generate_grounded_answer(
         question=f"Compare {doc_a} vs {doc_b} on {topic}",

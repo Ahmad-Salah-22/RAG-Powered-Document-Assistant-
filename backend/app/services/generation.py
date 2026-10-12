@@ -4,79 +4,84 @@ from typing import Tuple, List, Optional, Dict, Any
 from app.utils.logging_config import logger
 from app.core.config import settings
 
+from app.utils.text_enhancer import enhance_user_facing_answer
+
 PROMPT_TEMPLATES = {
-    "academic": """You are a strictly document-grounded Academic Research Assistant.
+    "academic": """You are an approachable, strictly document-grounded Academic Research Assistant.
 
 Your task is to answer the user's question using ONLY the provided document context blocks below.
 
-STRICT GROUNDING RULES:
-1. Base your answer ENTIRELY on the provided context.
-2. If the context does not contain enough information to answer the question, state clearly: "I could not find this information in the provided documents."
-3. Do NOT make up facts, extrapolate, or bring outside assumptions.
-4. Always cite your sources precisely using format: [Document Name, Page X].
-5. Keep your tone formal, analytical, and well-structured.
+Strict Grounding & Readability Rules:
+1. Base your answer ENTIRELY on the provided context blocks.
+2. If the context does not contain enough information to answer, state clearly: "I could not find relevant information in the provided documents to answer your question."
+3. Do NOT invent facts or make outside assumptions.
+4. Always cite your sources precisely using the format: [Document Name, Page X].
+5. Style & Readability: Write in natural, friendly, and easy-to-read prose. Avoid writing words, headings, or phrases in ALL CAPS unless they are standard acronyms (e.g., RAG, API, SQL). Break complex concepts into clean, digestible points so the reader does not get tired.
 
 {chat_history_block}
-DOCUMENT CONTEXT BLOCKS:
+Document Context:
 {context}
 
-USER QUESTION:
+User Question:
 {question}
 
-GROUNDED ACADEMIC ANSWER WITH CITATIONS:""",
+Grounded Academic Answer with Citations:""",
 
-    "concise": """You are an executive RAG assistant providing ultra-concise, high-impact answers.
+    "concise": """You are an executive RAG assistant providing ultra-concise, high-impact, and easy-to-read answers.
 
-STRICT GROUNDING RULES:
+Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. Provide the direct answer in 2-4 bullet points or concise sentences.
+2. Provide the direct answer in 2-4 clean bullet points or concise sentences.
 3. Cite sources at the end of each bullet: [Document Name, Page X].
-4. If the context does not answer the question, state: "I could not find this information in the provided documents."
+4. If the context does not answer the question, state: "I could not find relevant information in the provided documents to answer your question."
+5. Style: Friendly, natural sentence casing. Do NOT write in ALL CAPS.
 
 {chat_history_block}
-DOCUMENT CONTEXT BLOCKS:
+Document Context:
 {context}
 
-USER QUESTION:
+User Question:
 {question}
 
-CONCISE GROUNDED ANSWER:""",
+Concise Grounded Answer:""",
 
-    "detailed": """You are an expert tutor providing comprehensive explanations based on document context.
+    "detailed": """You are an expert, patient tutor providing clear, comprehensive explanations based on document context.
 
-STRICT GROUNDING RULES:
+Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. Break down the concept step-by-step with clear section headings.
-3. Include relevant definitions, code or formulas if present in the text.
+2. Break down the concept step-by-step with clean, intuitive section headings in title case.
+3. Include relevant definitions, code, or formulas if present in the text.
 4. Always cite specific sources: [Document Name, Page X].
-5. If the context is insufficient, state clearly: "I could not find this information in the provided documents."
+5. If the context is insufficient, state clearly: "I could not find relevant information in the provided documents to answer your question."
+6. Style & Readability: Write in a pleasant, conversational tone. Avoid robotic language and avoid writing words or headings in ALL CAPS. Keep explanations effortless to read.
 
 {chat_history_block}
-DOCUMENT CONTEXT BLOCKS:
+Document Context:
 {context}
 
-USER QUESTION:
+User Question:
 {question}
 
-DETAILED TUTORIAL-STYLE ANSWER WITH CITATIONS:""",
+Detailed Tutorial-Style Answer with Citations:""",
 
-    "summary": """You are a document synthesis specialist creating an executive summary.
+    "summary": """You are an executive document synthesis specialist creating an easy-to-digest summary.
 
-STRICT GROUNDING RULES:
+Strict Grounding & Readability Rules:
 1. Base your synthesis ONLY on the provided context.
 2. Provide:
-   - **Executive Summary** (1-2 paragraphs)
-   - **Key Takeaways** (3-5 bullet points with citations [Document Name, Page X])
-3. If not found in documents, state: "I could not find this information in the provided documents."
+   - **Executive Summary** (1-2 clear, readable paragraphs in natural sentence case)
+   - **Key Takeaways** (3-5 clean bullet points with citations: [Document Name, Page X])
+3. If not found in documents, state: "I could not find relevant information in the provided documents to answer your question."
+4. Style: Highly legible and user-friendly. Never use unnecessary ALL CAPS words.
 
 {chat_history_block}
-DOCUMENT CONTEXT BLOCKS:
+Document Context:
 {context}
 
-USER QUESTION:
+User Question:
 {question}
 
-EXECUTIVE SUMMARY & KEY TAKEAWAYS:"""
+Executive Summary & Key Takeaways:"""
 }
 
 
@@ -123,6 +128,46 @@ def format_chat_history(chat_history: Optional[List[Dict[str, str]]]) -> str:
     return "\n".join(lines)
 
 
+def is_off_topic_or_ungrounded_answer(answer: str) -> bool:
+    """
+    Detects if the generated answer indicates that the requested information
+    is missing from, ungrounded in, or off-topic relative to the provided documents.
+    """
+    if not answer or not answer.strip():
+        return True
+
+    ans_lower = answer.lower()
+
+    # Direct refusal / missing information patterns
+    patterns = [
+        r"could not find",
+        r"cannot find",
+        r"can not find",
+        r"unable to find",
+        r"not found in the (?:provided )?documents?",
+        r"not mentioned in the (?:provided )?documents?",
+        r"do(?:es)? not contain (?:any )?information",
+        r"do(?:es)? not discuss",
+        r"do(?:es)? not cover",
+        r"no information (?:about|regarding) .* in the (?:provided )?documents?",
+        r"outside the scope of the (?:provided )?documents?",
+        r"unable to provide an answer based on the (?:provided )?(?:context|documents?)",
+        r"unable to answer based on the (?:provided )?(?:context|documents?)",
+        r"information is not (?:present|available) in the (?:provided )?documents?",
+        r"not (?:present|available) in the (?:provided )?(?:context|documents?)",
+        r"(?:context|documents?) do(?:es)? not (?:contain|mention|provide|discuss|cover)",
+        r"i am unable to find",
+        r"i cannot answer this based on the provided",
+        r"cannot be answered (?:using|from) the provided",
+    ]
+
+    for pat in patterns:
+        if re.search(pat, ans_lower):
+            return True
+
+    return False
+
+
 def generate_extractive_fallback_answer(question: str, context: str) -> str:
     """
     Intelligent heuristic fallback used when local Ollama is offline or not installed.
@@ -133,15 +178,22 @@ def generate_extractive_fallback_answer(question: str, context: str) -> str:
 
     blocks = context.split("\n---\n")
     keywords = set(re.findall(r"\w+", question.lower())) - {"what", "is", "the", "of", "and", "in", "a", "to", "how", "are", "for"}
-    
+
     scored_blocks = []
     for b in blocks:
         b_lower = b.lower()
         score = sum(1 for kw in keywords if kw in b_lower)
         scored_blocks.append((score, b))
 
+    # If no keywords matched any context blocks, this query is completely off-topic
+    if not scored_blocks or max(score for score, _ in scored_blocks) == 0:
+        return "I could not find relevant information in the provided documents to answer your question."
+
     scored_blocks.sort(key=lambda x: x[0], reverse=True)
-    best_blocks = [b[1] for b in scored_blocks[:3] if b[1].strip()]
+    best_blocks = [b[1] for b in scored_blocks[:3] if b[1].strip() and b[0] > 0]
+
+    if not best_blocks:
+        return "I could not find relevant information in the provided documents to answer your question."
 
     extracted_lines = []
     for b in best_blocks:
@@ -216,27 +268,27 @@ async def generate_grounded_answer(
                 data = response.json()
                 answer_text = data.get("response", "").strip()
                 logger.info("Successfully generated grounded response from Ollama.")
-                return answer_text, True, False
+                return enhance_user_facing_answer(answer_text), True, False
             elif response.status_code == 404:
                 error_msg = f"Ollama model '{ollama_model}' not found. Please run 'ollama pull {ollama_model}'."
                 logger.warning(error_msg)
                 if allow_fallback:
-                    return generate_extractive_fallback_answer(question, context), True, True
+                    return enhance_user_facing_answer(generate_extractive_fallback_answer(question, context)), True, True
                 return f"Error: {error_msg}", False, False
             else:
                 error_msg = f"Ollama HTTP {response.status_code}: {response.text}"
                 logger.warning(error_msg)
                 if allow_fallback:
-                    return generate_extractive_fallback_answer(question, context), True, True
+                    return enhance_user_facing_answer(generate_extractive_fallback_answer(question, context)), True, True
                 return f"Error connecting to LLM service: {error_msg}", False, False
 
     except (httpx.ConnectError, httpx.TimeoutException) as conn_err:
         logger.warning(f"Ollama connection unavailable or timed out ({conn_err}). Engaging intelligent fallback.")
         if allow_fallback:
-            return generate_extractive_fallback_answer(question, context), True, True
+            return enhance_user_facing_answer(generate_extractive_fallback_answer(question, context)), True, True
         return f"Service Unavailable: Ollama is offline at {ollama_host}.", False, False
     except Exception as e:
         logger.error(f"Unexpected error during generation: {str(e)}", exc_info=True)
         if allow_fallback:
-            return generate_extractive_fallback_answer(question, context), True, True
+            return enhance_user_facing_answer(generate_extractive_fallback_answer(question, context)), True, True
         return f"Error: {str(e)}", False, False

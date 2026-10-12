@@ -23,6 +23,7 @@ from app.services.generation import (
     get_available_ollama_models
 )
 from app.utils.logging_config import logger
+from app.utils.text_enhancer import clean_and_enhance_text
 from app.core.config import settings
 
 router = APIRouter(prefix="/documents", tags=["Document Management"])
@@ -216,8 +217,12 @@ async def get_document_file(document_name: str):
     possible_paths = [
         os.path.join("./data/raw", document_name),
         os.path.join("data/raw", document_name),
+        os.path.join("./backend/data/raw", document_name),
+        os.path.join("backend/data/raw", document_name),
         os.path.abspath(os.path.join("data", "raw", document_name)),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name))
+        os.path.abspath(os.path.join("backend", "data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw", document_name))
     ]
     file_path = None
     for p in possible_paths:
@@ -269,8 +274,12 @@ async def get_document_page(document_name: str, page_number: int, request: Reque
     possible_paths = [
         os.path.join("./data/raw", document_name),
         os.path.join("data/raw", document_name),
+        os.path.join("./backend/data/raw", document_name),
+        os.path.join("backend/data/raw", document_name),
         os.path.abspath(os.path.join("data", "raw", document_name)),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name))
+        os.path.abspath(os.path.join("backend", "data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw", document_name)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw", document_name))
     ]
     raw_path = next((p for p in possible_paths if os.path.isfile(p)), None)
 
@@ -317,12 +326,13 @@ async def get_document_page(document_name: str, page_number: int, request: Reque
             detail=f"Document '{document_name}' or Page {page_number} not found."
         )
 
+    cleaned_page_text = clean_and_enhance_text(page_text)
     return DocumentPageResponse(
         document_name=document_name,
         page_number=page_number,
         total_pages=total_pages,
-        text_content=page_text,
-        char_count=len(page_text),
+        text_content=cleaned_page_text,
+        char_count=len(cleaned_page_text),
         has_file=raw_path is not None,
         file_type=ext
     )

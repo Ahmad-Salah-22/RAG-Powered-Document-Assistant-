@@ -17,6 +17,7 @@ import streamlit as st
 import pandas as pd
 from typing import Dict, Any, List
 from api_client import RAGApiClient
+from app.utils.text_enhancer import clean_and_enhance_text, enhance_user_facing_answer
 
 # ---------------------------------------------------------
 # Page Configuration & Metadata
@@ -640,6 +641,39 @@ if "feedback_store" not in st.session_state:
 if "preset_mode" not in st.session_state:
     st.session_state.preset_mode = "🧠 SOTA Reranked Hybrid"
 
+import re
+
+def is_off_topic_or_ungrounded_answer(answer: str) -> bool:
+    """Detects if answer indicates that information is missing or off-topic."""
+    if not answer or not answer.strip():
+        return True
+    ans_lower = answer.lower()
+    patterns = [
+        r"could not find",
+        r"cannot find",
+        r"can not find",
+        r"unable to find",
+        r"not found in the (?:provided )?documents?",
+        r"not mentioned in the (?:provided )?documents?",
+        r"do(?:es)? not contain (?:any )?information",
+        r"do(?:es)? not discuss",
+        r"do(?:es)? not cover",
+        r"no information (?:about|regarding) .* in the (?:provided )?documents?",
+        r"outside the scope of the (?:provided )?documents?",
+        r"unable to provide an answer based on the (?:provided )?(?:context|documents?)",
+        r"unable to answer based on the (?:provided )?(?:context|documents?)",
+        r"information is not (?:present|available) in the (?:provided )?documents?",
+        r"not (?:present|available) in the (?:provided )?(?:context|documents?)",
+        r"(?:context|documents?) do(?:es)? not (?:contain|mention|provide|discuss|cover)",
+        r"i am unable to find",
+        r"i cannot answer this based on the provided",
+        r"cannot be answered (?:using|from) the provided",
+    ]
+    for pat in patterns:
+        if re.search(pat, ans_lower):
+            return True
+    return False
+
 # Helper for streaming responses
 def text_stream_generator(full_text: str):
     words = full_text.split(" ")
@@ -1036,15 +1070,24 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("##### 📊 Session Activity")
-    col_s1, col_s2 = st.columns(2)
-    with col_s1:
-        st.metric("Queries", len(st.session_state.query_history))
-    with col_s2:
+    sidebar_activity_placeholder = st.sidebar.empty()
+
+    def render_sidebar_activity(container):
+        history_queries = len(st.session_state.get("query_history", []))
+        active_user_msgs = sum(1 for m in st.session_state.get("messages", []) if m.get("role") == "user")
+        display_queries = max(history_queries, active_user_msgs)
         avg_lat = (
             sum(q.get("latency_ms", 0) for q in st.session_state.query_history) / len(st.session_state.query_history)
-            if st.session_state.query_history else 0
+            if st.session_state.get("query_history") else 0
         )
-        st.metric("Avg Latency", f"{avg_lat:.0f}ms")
+        with container.container():
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                st.metric("QUERIES", display_queries)
+            with col_s2:
+                st.metric("AVG LATENCY", f"{avg_lat:.0f}ms")
+
+    render_sidebar_activity(sidebar_activity_placeholder)
 
     st.markdown("---")
     # Chat History Maintenance
@@ -1067,7 +1110,7 @@ with st.sidebar:
         for m in st.session_state.messages:
             role = m['role'].capitalize()
             md_export += f"### {role}\n{m['content']}\n\n"
-            if m.get("sources"):
+            if m.get("sources") and not is_off_topic_or_ungrounded_answer(m.get("content", "")):
                 md_export += "**Cited Sources:**\n"
                 for s in m["sources"]:
                     md_export += f"- *{s.get('document', 'Unknown')}* (Page {s.get('page', 1)})\n"
@@ -1214,7 +1257,7 @@ with tab_chat:
                     ok_cmp, res_cmp = api_client.compare_documents(cmp_doc_a, cmp_doc_b, cmp_topic)
                     if ok_cmp:
                         st.success(f"Comparative matrix generated in {res_cmp.get('latency_ms', 0):.0f}ms!")
-                        st.markdown(res_cmp.get("synthesis", ""))
+                        st.markdown(enhance_user_facing_answer(res_cmp.get("synthesis", "")))
                         c_s1, c_s2 = st.columns(2)
                         with c_s1:
                             st.markdown(f"**📚 Sources from `{cmp_doc_a}`:**")
@@ -1234,7 +1277,8 @@ with tab_chat:
     # Render Chat History
     for idx, msg in enumerate(st.session_state.messages):
         with st.chat_message(msg["role"], avatar="🧑‍💻" if msg["role"] == "user" else "🤖"):
-            st.markdown(msg["content"])
+            display_content = enhance_user_facing_answer(msg["content"]) if msg["role"] == "assistant" else msg["content"]
+            st.markdown(display_content)
 
             # Agentic CRAG Reasoning Trace Expander if present
             if msg.get("reasoning_steps"):
@@ -1244,8 +1288,8 @@ with tab_chat:
                     confidence_score=msg.get("confidence_score", 85.0)
                 )
 
-            # Rich Citation Cards
-            if msg.get("sources"):
+            # Rich Citation Cards (Suppressed for off-topic/ungrounded answers)
+            if msg.get("sources") and not is_off_topic_or_ungrounded_answer(msg.get("content", "")):
                 st.markdown("<div style='margin-top: 14px; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #cbd5e1;'>📚 Verified Evidence & Citations:</div>", unsafe_allow_html=True)
                 for s_idx, src in enumerate(msg["sources"]):
                     render_citation_card(src, key_prefix=f"hist_{idx}_{s_idx}")
@@ -1303,6 +1347,7 @@ with tab_chat:
     if query_input:
         # Append User Turn
         st.session_state.messages.append({"role": "user", "content": query_input, "timestamp": time.strftime("%H:%M:%S")})
+        render_sidebar_activity(sidebar_activity_placeholder)
         with st.chat_message("user", avatar="🧑‍💻"):
             st.markdown(query_input)
 
@@ -1329,7 +1374,8 @@ with tab_chat:
                 )
 
                 if success:
-                    answer = response.get("answer", "No answer generated.")
+                    raw_answer = response.get("answer", "No answer generated.")
+                    answer = enhance_user_facing_answer(raw_answer)
                     sources = response.get("sources", [])
                     reasoning_steps = response.get("reasoning_steps", [])
                     intent_type = response.get("intent_type", "factual_lookup")
@@ -1354,8 +1400,8 @@ with tab_chat:
                     # Stream Answer Dynamically
                     st.write_stream(text_stream_generator(answer))
 
-                    # Render Verified Sources
-                    if sources:
+                    # Render Verified Sources (Suppressed for off-topic/ungrounded answers)
+                    if sources and not is_off_topic_or_ungrounded_answer(answer):
                         st.markdown("<div style='margin-top: 14px; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #cbd5e1;'>📚 Verified Evidence & Citations:</div>", unsafe_allow_html=True)
                         for s_idx, src in enumerate(sources):
                             render_citation_card(src, key_prefix=f"live_{s_idx}")
@@ -1373,11 +1419,12 @@ with tab_chat:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Save to Session State
+                    # Save to Session State (clear sources if off-topic)
+                    saved_sources = [] if is_off_topic_or_ungrounded_answer(answer) else sources
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
-                        "sources": sources,
+                        "sources": saved_sources,
                         "metrics": metrics,
                         "reasoning_steps": reasoning_steps,
                         "intent_type": intent_type,
@@ -1397,6 +1444,7 @@ with tab_chat:
                         "model": metrics["model_used"],
                         "timestamp": time.strftime("%H:%M:%S")
                     })
+                    render_sidebar_activity(sidebar_activity_placeholder)
                 else:
                     error_msg = response.get("error", "An error occurred.")
                     st.error(f"⚠️ {error_msg}")
@@ -1536,10 +1584,11 @@ with tab_docs:
                     st.metric("Avg Chunk Size", f"{avg_c:.0f} chars")
 
                 if target_meta.get("summary_preview"):
+                    clean_abstract = clean_and_enhance_text(target_meta.get("summary_preview"))
                     st.markdown(f"""
                     <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #6366f1; padding: 12px 16px; border-radius: 0 10px 10px 0; margin-top: 14px;">
                         <b style="color: #c7d2fe;">📄 Auto-Generated Document Abstract Preview:</b>
-                        <div style="color: #cbd5e1; font-size: 0.88rem; margin-top: 6px; line-height: 1.6;">"{target_meta.get('summary_preview')}"</div>
+                        <div style="color: #cbd5e1; font-size: 0.88rem; margin-top: 6px; line-height: 1.6;">"{clean_abstract}"</div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -1651,12 +1700,13 @@ with tab_viewer:
                 """, unsafe_allow_html=True)
 
                 raw_text = pg_data.get("text_content", "")
+                enhanced_page_text = clean_and_enhance_text(raw_text)
                 if hl_query and hl_query.strip():
                     import re
                     pattern = re.compile(re.escape(hl_query.strip()), re.IGNORECASE)
-                    rendered_page_text = pattern.sub(lambda m: f"<span class='viewer-page-highlight'>{m.group(0)}</span>", raw_text)
+                    rendered_page_text = pattern.sub(lambda m: f"<span class='viewer-page-highlight'>{m.group(0)}</span>", enhanced_page_text)
                 else:
-                    rendered_page_text = raw_text
+                    rendered_page_text = enhanced_page_text
 
                 st.markdown(f"""
                 <div class="viewer-page-box">

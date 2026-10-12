@@ -6,6 +6,7 @@ import pypdf
 import chromadb
 from sentence_transformers import SentenceTransformer
 from app.utils.logging_config import logger
+from app.utils.text_enhancer import clean_and_enhance_text
 from app.core.config import settings
 
 
@@ -33,7 +34,7 @@ def extract_pdf_pages(pdf_path: str) -> Tuple[List[Dict[str, Any]], Dict[str, An
         for page_num, page in enumerate(reader.pages, start=1):
             try:
                 text = page.extract_text() or ""
-                cleaned_text = " ".join(text.split())
+                cleaned_text = clean_and_enhance_text(" ".join(text.split()))
                 char_len = len(cleaned_text)
 
                 if char_len < 20:  # Potential image-only / OCR page
@@ -161,7 +162,7 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
             for page_num, page in enumerate(reader.pages, start=1):
                 try:
                     text = page.extract_text() or ""
-                    cleaned_text = " ".join(text.split())
+                    cleaned_text = clean_and_enhance_text(" ".join(text.split()))
                     char_len = len(cleaned_text)
                     if char_len < 20:
                         stats["requires_ocr"] = True
@@ -249,10 +250,11 @@ def extract_from_bytes(file_bytes: bytes, filename: str) -> Tuple[List[Dict[str,
             "text": cleaned_text
         })
 
-    # Generate document abstract / preview snippet
+    # Generate document abstract / preview snippet with clean, pleasant formatting
     all_text = " ".join(p["text"] for p in pages if p.get("text"))
     if all_text:
-        stats["summary_preview"] = all_text[:280] + ("..." if len(all_text) > 280 else "")
+        cleaned_preview = clean_and_enhance_text(all_text[:600])
+        stats["summary_preview"] = cleaned_preview[:280] + ("..." if len(cleaned_preview) > 280 else "")
 
     return pages, stats
 
