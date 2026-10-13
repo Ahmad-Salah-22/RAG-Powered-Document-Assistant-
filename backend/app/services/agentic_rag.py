@@ -18,6 +18,14 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
     """
     q_lower = question.lower()
 
+    # Criteria / Quality Evaluation / Checklist intent
+    criteria_keywords = [
+        "criteria", "criterion", "checklist", "principles", "quality", 
+        "warning sign", "warning signs", "trade-off", "trade-offs", "tradeoff", "tradeoffs",
+        "evaluation", "good data model", "what makes a good", "quality review"
+    ]
+    is_criteria = any(kw in q_lower for kw in criteria_keywords)
+
     # Comparison intent patterns
     compare_keywords = ["compare", "difference between", "versus", "vs", "tradeoff", "trade-off", "contrast", "differ"]
     is_compare = any(kw in q_lower for kw in compare_keywords)
@@ -30,7 +38,17 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
     complexity_keywords = ["complexity", "big o", "runtime", "speed", "worst case", "average case", "memory"]
     is_complexity = any(kw in q_lower for kw in complexity_keywords)
 
-    if is_compare:
+    if is_criteria:
+        intent_type = "criteria_and_quality_evaluation"
+        sub_queries = [
+            f"What makes a good data model? Completeness Nonredundancy Enforces business rules Data reusability Stability flexibility Elegance Communication Integration {question}",
+            f"Quality review checklist Criterion Question to ask Warning sign Completeness Nonredundancy Business rules Reusability {question}",
+            f"Conflicting objectives and trade-offs in quality criteria: Flexibility vs Rule enforcement Elegance vs Communication {question}"
+        ]
+        reasoning_summary = "Detected document quality criteria / checklist evaluation intent. Decomposed into quality criteria definitions, review checklist warning signs, and conflicting trade-offs."
+        is_complex = True
+
+    elif is_compare:
         intent_type = "multi_hop_comparison"
         # Extract potential entities to split
         # Example: "Compare hash table vs binary search tree" -> sub queries
@@ -105,11 +123,17 @@ def grade_context_relevance(
         }
 
     confidences = [s.confidence_percent if s.confidence_percent is not None else 60.0 for s in sources]
-    avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
 
     # Filter out chunks that fall well below threshold (e.g. < 40% confidence)
     graded_sources = [s for s in sources if (s.confidence_percent or 0.0) >= 40.0]
     relevant_count = len(graded_sources)
+
+    # Compute grounded confidence from the top retained chunks passed to the generator
+    top_confs = [s.confidence_percent for s in graded_sources[:6] if s.confidence_percent is not None]
+    if top_confs:
+        avg_conf = sum(top_confs) / len(top_confs)
+    else:
+        avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
 
     is_sufficient = avg_conf >= threshold and relevant_count > 0
 
@@ -183,12 +207,15 @@ async def execute_agentic_rag(
     all_sources: List[SourceItem] = []
     seen_snippets = set()
 
+    # Expand top_k for criteria & evaluation queries to ensure full checklist coverage
+    eff_top_k = max(top_k, 6) if intent_type == "criteria_and_quality_evaluation" else top_k
+
     # Primary query retrieval
     primary_context, primary_sources = retrieve_context(
         query=question,
         collection=collection,
         embedding_model=embedding_model,
-        top_k=top_k,
+        top_k=eff_top_k,
         document_filter=document_filter,
         similarity_threshold=similarity_threshold,
         retrieval_mode=retrieval_mode,
@@ -205,12 +232,13 @@ async def execute_agentic_rag(
 
     # If complex, run sub-queries to fill knowledge gaps (Multi-Hop)
     if intent_data["is_complex"] and len(sub_queries) > 1:
-        for sq in sub_queries[:2]:
+        sub_query_slice = sub_queries if intent_type == "criteria_and_quality_evaluation" else sub_queries[:2]
+        for sq in sub_query_slice:
             _, sub_sources = retrieve_context(
                 query=sq,
                 collection=collection,
                 embedding_model=embedding_model,
-                top_k=max(2, top_k // 2),
+                top_k=max(3, eff_top_k // 2),
                 document_filter=document_filter,
                 similarity_threshold=similarity_threshold,
                 retrieval_mode=retrieval_mode,
@@ -223,6 +251,9 @@ async def execute_agentic_rag(
                 if snip_key not in seen_snippets:
                     seen_snippets.add(snip_key)
                     all_sources.append(s)
+
+    # Sort all gathered sources globally by confidence & relevance
+    all_sources.sort(key=lambda s: (s.confidence_percent or 0.0), reverse=True)
 
     retrieval_latency = (time.perf_counter() - t_ret_start) * 1000.0
 
@@ -244,7 +275,8 @@ async def execute_agentic_rag(
     # Step 3: Self-Reflection & Relevance Grading (CRAG)
     # -------------------------------------------------------------
     grading = grade_context_relevance(question, all_sources, threshold=60.0)
-    final_sources = grading["filtered_sources"][:top_k + 2]
+    max_retain = (eff_top_k + 4) if intent_type == "criteria_and_quality_evaluation" else (top_k + 2)
+    final_sources = grading["filtered_sources"][:max_retain]
 
     # If context is graded as off-topic or insufficient, suppress sources early
     if not grading["is_sufficient"] and grading["relevant_count"] == 0:
@@ -263,11 +295,12 @@ async def execute_agentic_rag(
         }
     ))
 
-    # Construct unified context string
+    # Construct unified context string with full chunk texts
     formatted_blocks = []
     for s in final_sources:
         header = f"--- Document: {s.document} | Page: {s.page} ---"
-        formatted_blocks.append(f"{header}\n{s.snippet or ''}")
+        chunk_content = s.full_text if (hasattr(s, "full_text") and s.full_text) else (s.snippet or '')
+        formatted_blocks.append(f"{header}\n{chunk_content}")
     unified_context = "\n\n".join(formatted_blocks)
 
     # -------------------------------------------------------------

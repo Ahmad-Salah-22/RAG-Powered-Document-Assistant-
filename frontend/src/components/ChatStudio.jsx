@@ -21,14 +21,6 @@ import {
 } from 'lucide-react';
 import { submitQuery } from '../services/api';
 
-const PROMPT_SUGGESTIONS = [
-  { category: 'Data Structures', text: 'What is the average lookup complexity of a hash table?' },
-  { category: 'Data Structures', text: 'Compare binary search trees versus hash tables.' },
-  { category: 'Machine Learning', text: 'Explain the difference between supervised and unsupervised learning.' },
-  { category: 'Machine Learning', text: 'What is the role of backpropagation in deep neural networks?' },
-  { category: 'Operating Systems', text: 'How does virtual memory paging and page replacement work?' }
-];
-
 export default function ChatStudio({ documents, onViewDocument }) {
   // Session State
   const [sessions, setSessions] = useState([
@@ -53,6 +45,48 @@ export default function ChatStudio({ documents, onViewDocument }) {
 
   const messagesEndRef = useRef(null);
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
+
+  const dynamicSuggestions = React.useMemo(() => {
+    if (!documents || documents.length === 0) {
+      return [
+        { category: 'Document Library', text: 'Upload your research papers or project documents in the Document Library to begin querying.' }
+      ];
+    }
+
+    const suggestions = [];
+    const docNames = documents.map(d => d.document_name.toLowerCase());
+
+    // When Data Modeling documents are indexed
+    if (docNames.some(n => n.includes('data_modeling') || n.includes('model'))) {
+      suggestions.push(
+        { category: 'Quality Criteria', text: 'What are the eight quality criteria of a good data model?' },
+        { category: 'Review Checklist', text: 'What are the key questions and warning signs in the Quality Review Checklist?' },
+        { category: 'Criteria Trade-offs', text: 'What are the conflicting objectives and trade-offs in data model quality criteria?' },
+        { category: 'Architecture', text: 'Explain the three-schema architecture (conceptual, logical, physical) and why data modeling is a design activity.' }
+      );
+    }
+
+    // When Data Discovery presentation is indexed
+    if (docNames.some(n => n.includes('discovery'))) {
+      suggestions.push(
+        { category: 'Data Discovery', text: 'What are the core stages and methodologies of Data Discovery?' },
+        { category: 'Executive Summary', text: 'Summarize the primary actionable takeaways and findings from Data Discovery.' }
+      );
+    }
+
+    // Dynamic suggestions for any custom user-uploaded files
+    documents.forEach(doc => {
+      const lower = doc.document_name.toLowerCase();
+      if (!lower.includes('data_modeling') && !lower.includes('discovery')) {
+        suggestions.push(
+          { category: doc.document_name.slice(0, 16), text: `What are the core criteria and methodologies defined in ${doc.document_name}?` },
+          { category: 'Executive Summary', text: `Summarize the key takeaways and architectural principles from ${doc.document_name}.` }
+        );
+      }
+    });
+
+    return suggestions.slice(0, 6);
+  }, [documents]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -381,10 +415,13 @@ export default function ChatStudio({ documents, onViewDocument }) {
 
               {/* Categorized Prompt Suggestions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-                <div style={{ fontSize: '0.775rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Recommended Questions
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <span>Recommended Questions</span>
+                  <span style={{ fontSize: '0.7rem', color: '#818cf8', textTransform: 'none', fontWeight: 500 }}>
+                    Grounding from {documents?.length || 0} active project file{documents?.length === 1 ? '' : 's'}
+                  </span>
                 </div>
-                {PROMPT_SUGGESTIONS.map((item, idx) => (
+                {dynamicSuggestions.map((item, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(item.text)}

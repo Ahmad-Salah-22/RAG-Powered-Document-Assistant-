@@ -83,6 +83,7 @@ class SourceItem(BaseModel):
     document: str = Field(..., description="Filename of the referenced document.")
     page: int = Field(..., description="1-based page number where context was extracted.")
     snippet: Optional[str] = Field(None, description="Relevant excerpt text snippet.")
+    full_text: Optional[str] = Field(None, description="Complete chunk text for synthesis and inspection.")
     score: Optional[float] = Field(None, description="Relevance distance / similarity score.")
     confidence_percent: Optional[float] = Field(None, description="Estimated match confidence percentage.")
     retrieval_method: Optional[str] = Field(default="dense", description="Method used: 'dense', 'bm25', 'hybrid_rrf', or 'reranked'.")

@@ -13,10 +13,11 @@ Your task is to answer the user's question using ONLY the provided document cont
 
 Strict Grounding & Readability Rules:
 1. Base your answer ENTIRELY on the provided context blocks.
-2. If the context does not contain enough information to answer, state clearly: "I could not find relevant information in the provided documents to answer your question."
-3. Do NOT invent facts or make outside assumptions.
-4. Always cite your sources precisely using the format: [Document Name, Page X].
-5. Style & Readability: Write in natural, friendly, and easy-to-read prose. Avoid writing words, headings, or phrases in ALL CAPS unless they are standard acronyms (e.g., RAG, API, SQL). Break complex concepts into clean, digestible points so the reader does not get tired.
+2. When the question asks for criteria, principles, components, or checklists, extract and synthesize all corresponding items (including numbered items, bullet points, checklist questions, or warning signs) found in the context (e.g. from sections like 'What makes a good...', quality review checklists, or trade-offs), and present them clearly with their explanations.
+3. If the context does not contain relevant information to answer, state clearly: "I could not find relevant information in the provided documents to answer your question."
+4. Do NOT invent facts or make outside assumptions.
+5. Always cite your sources precisely using the format: [Document Name, Page X].
+6. Style & Readability: Write in natural, friendly, and easy-to-read prose. Avoid writing words, headings, or phrases in ALL CAPS unless they are standard acronyms (e.g., RAG, API, SQL). Break complex concepts into clean, digestible points so the reader does not get tired.
 
 {chat_history_block}
 Document Context:
@@ -31,10 +32,11 @@ Grounded Academic Answer with Citations:""",
 
 Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. Provide the direct answer in 2-4 clean bullet points or concise sentences.
-3. Cite sources at the end of each bullet: [Document Name, Page X].
-4. If the context does not answer the question, state: "I could not find relevant information in the provided documents to answer your question."
-5. Style: Friendly, natural sentence casing. Do NOT write in ALL CAPS.
+2. When criteria, checklists, or principles are requested, list all matching items directly with their core definitions and citations.
+3. Provide the direct answer in clean bullet points or concise sentences.
+4. Cite sources at the end of each bullet: [Document Name, Page X].
+5. If the context does not answer the question, state: "I could not find relevant information in the provided documents to answer your question."
+6. Style: Friendly, natural sentence casing. Do NOT write in ALL CAPS.
 
 {chat_history_block}
 Document Context:
@@ -49,11 +51,12 @@ Concise Grounded Answer:""",
 
 Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. Break down the concept step-by-step with clean, intuitive section headings in title case.
-3. Include relevant definitions, code, or formulas if present in the text.
-4. Always cite specific sources: [Document Name, Page X].
-5. If the context is insufficient, state clearly: "I could not find relevant information in the provided documents to answer your question."
-6. Style & Readability: Write in a pleasant, conversational tone. Avoid robotic language and avoid writing words or headings in ALL CAPS. Keep explanations effortless to read.
+2. When criteria, checklists, or principles are requested, explain each criterion thoroughly with its definition, rationale, checklist verification questions, and warning signs from the context.
+3. Break down the concept step-by-step with clean, intuitive section headings in title case.
+4. Include relevant definitions, code, or formulas if present in the text.
+5. Always cite specific sources: [Document Name, Page X].
+6. If the context is insufficient, state clearly: "I could not find relevant information in the provided documents to answer your question."
+7. Style & Readability: Write in a pleasant, conversational tone. Avoid robotic language and avoid writing words or headings in ALL CAPS. Keep explanations effortless to read.
 
 {chat_history_block}
 Document Context:
@@ -68,11 +71,12 @@ Detailed Tutorial-Style Answer with Citations:""",
 
 Strict Grounding & Readability Rules:
 1. Base your synthesis ONLY on the provided context.
-2. Provide:
+2. When criteria or review checklists are requested, summarize every criterion and checklist dimension concisely.
+3. Provide:
    - **Executive Summary** (1-2 clear, readable paragraphs in natural sentence case)
-   - **Key Takeaways** (3-5 clean bullet points with citations: [Document Name, Page X])
-3. If not found in documents, state: "I could not find relevant information in the provided documents to answer your question."
-4. Style: Highly legible and user-friendly. Never use unnecessary ALL CAPS words.
+   - **Key Takeaways & Criteria Checklist** (3-6 clean bullet points with citations: [Document Name, Page X])
+4. If not found in documents, state: "I could not find relevant information in the provided documents to answer your question."
+5. Style: Highly legible and user-friendly. Never use unnecessary ALL CAPS words.
 
 {chat_history_block}
 Document Context:
