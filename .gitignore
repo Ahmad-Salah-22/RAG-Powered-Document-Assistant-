@@ -10,6 +10,12 @@ ENV/
 .coverage
 htmlcov/
 
+# Node & Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
 # Environment Variables
 .env
 .env.local

@@ -31,7 +31,7 @@
 ================================================================================
   Domain:          Retrieval-Augmented Generation (RAG), Agentic AI, NLP, Vector DB
   Key Tech:        FastAPI, ChromaDB, SentenceTransformers, BM25, Cross-Encoder,
-                   Ollama (Llama 3), Streamlit Studio Pro, Ragas Triad
+                   Ollama (Llama 3), React + Vite Studio Pro, Ragas Triad
 ================================================================================
 ```
 > **Speaker Notes:**
@@ -76,7 +76,7 @@ flowchart TD
     subgraph Grounded Synthesis & Verification
         CRAG --> Prompt["📋 Strictly Grounded System Directive"]
         Prompt --> Ollama["🦙 Ollama Local LLM (llama3:8b) / Fallback Engine"]
-        Ollama --> UI["✨ Streamlit Studio Pro (5 Tabs + PDF Visualizer)"]
+        Ollama --> UI["✨ React + Vite Studio Pro (5 Tabs + PDF Visualizer)"]
         UI --> PDFViewer["📑 Live Interactive PDF Viewport & Page Jump"]
     end
 ```
@@ -95,7 +95,7 @@ flowchart TD
 | **Agentic Reasoning Engine** | Corrective RAG (CRAG) & Intent Decomposer | Query decomposition, multi-hop retrieval, self-reflection, and relevance grading |
 | **Document Parsers** | PyPDF, python-pptx, openpyxl, pandas, zipfile XML | Ingests PDF, DOCX, PPTX, XLSX, CSV, Markdown, and plaintext files |
 | **Local LLM Engine** | Ollama (`llama3:8b`, `mistral`, `gemma2`) | 100% on-premise local inference with heuristic extractive offline fallback |
-| **Interactive Studio UI** | Streamlit, Cyber-Glassmorphism CSS, SVG Radar | 5-tab responsive dark interface with live token streaming & embedded PDF viewport |
+| **Interactive Studio UI** | React 19, Vite, Cyber-Glassmorphism CSS, SVG Radar | 5-tab responsive dark interface with real-time chat & embedded PDF viewport |
 | **Automated Benchmarking** | Ragas Triad Evaluation Suite | Automated benchmarking of Faithfulness, Answer Relevance, and Context Precision |
 
 ---
@@ -181,7 +181,7 @@ Evaluated against the industry-standard **Ragas Triad Benchmark Suite** (Faithfu
 
 - **Sub-50ms Retrieval Latency:** Average vector search latency is 18–35ms.
 - **Anti-Hallucination Guardrail Success:** 100% on out-of-domain queries.
-- **Visualized in Tab 5:** Interactive Cyber-Glassmorphic SVG Spider/Radar chart rendered natively in Streamlit.
+- **Visualized in Tab 5:** Interactive Cyber-Glassmorphic SVG Spider/Radar chart rendered natively in React.
 
 ---
 
@@ -215,7 +215,7 @@ The RAG-Powered Document Assistant proves that state-of-the-art information retr
 
 ```text
 [0:00 - 0:20] SYSTEM HEALTH & 5-TAB WORKSPACE OVERVIEW
-• Action: Open browser to http://localhost:8501.
+• Action: Open browser to http://localhost:3000.
 • Narration: "Welcome to our graduation presentation of the RAG Document Assistant Enterprise Studio Pro. 
 In the left sidebar, our diagnostic monitors confirm that FastAPI, ChromaDB, and our local Ollama LLM are online. 
 The studio features 5 specialized tabs: Chat Assistant, Document Library, Visual PDF Viewer, Settings, and Analytics."

@@ -99,7 +99,7 @@ def create_presentation():
     p_c1.font.color.rgb = TEXT_WHITE
     
     p_c2 = tf_card.add_paragraph()
-    p_c2.text = "Technologies: FastAPI • ChromaDB • SentenceTransformers • Ollama (llama3:8b) • Streamlit"
+    p_c2.text = "Technologies: FastAPI • ChromaDB • SentenceTransformers • Ollama (llama3:8b) • React + Vite"
     p_c2.font.size = Pt(14)
     p_c2.font.color.rgb = ACCENT_GREEN
     p_c2.space_before = Pt(8)
@@ -198,7 +198,7 @@ def create_presentation():
     p.font.color.rgb = ACCENT_PURPLE
     
     steps2 = [
-        "👤 User submits query via Streamlit UI",
+        "👤 User submits query via React + Vite UI",
         "⚡ FastAPI receives POST /query request",
         "🔍 ChromaDB retrieves Top-K nearest chunks",
         "🛡️ Context formatted into Guardrail Prompt",
@@ -242,7 +242,7 @@ def create_presentation():
         ("Backend API", "FastAPI, Uvicorn, Pydantic", "REST endpoints (/health, /query), Lifespan startup caching"),
         ("Dense Vector Store", "ChromaDB, SentenceTransformers", "384d dense embeddings (all-MiniLM-L6-v2), Cosine distance metric"),
         ("Local LLM Engine", "Ollama (llama3:8b)", "Grounded prompt execution with low temperature (0.1) for zero hallucination"),
-        ("Frontend UI", "Streamlit Studio Pro, Glassmorphism CSS", "Token streaming, citation cards with confidence meters, prompt library, presets, latency charts"),
+        ("Frontend UI", "React 19, Vite, Glassmorphism CSS", "Real-time chat, citation cards with confidence meters, prompt library, visual PDF viewer, comparison matrix"),
         ("DevOps & Testing", "Pytest, Docker, Compose", "Automated API unit test suite and containerized deployment")
     ]
 
@@ -452,7 +452,7 @@ def create_presentation():
         "✅ Fully functional production-grade RAG pipeline",
         "✅ 100% precision on in-domain academic queries",
         "✅ Zero hallucination guardrail enforcement",
-        "✅ Modern Glassmorphism Streamlit UI",
+        "✅ Modern Glassmorphism React + Vite UI",
         "✅ Unit tested & Docker container ready"
     ]
     for o in outs:

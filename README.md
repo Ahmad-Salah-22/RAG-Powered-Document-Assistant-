@@ -14,7 +14,7 @@ A complete, production-grade **Retrieval-Augmented Generation (RAG) Document Ass
 - **Multi-Session Conversation Threads**: Multi-threaded chat session management in the sidebar enabling separate, persistent discussion workflows.
 - **AI Study & Research Accelerators**: 1-click tools for generating study flashcards, self-test quizzes, and comparative concept analyses.
 - **Automated Ragas Triad Evaluation**: Built-in benchmark suite measuring **Faithfulness (Grounding)**, **Answer Relevance**, **Context Precision**, and **Context Recall** with interactive radar charts in Tab 4.
-- **Interactive 4-Tab Streamlit Studio Pro**: Cyber-glassmorphism dark UI featuring real-time token streaming, rich citation cards with rank indicators, categorized prompt library, 1-click demo dataset loader, and Markdown/JSON export.
+- **Interactive 5-Tab React + Vite Pro Studio**: Cyber-glassmorphism dark UI featuring real-time chat, rich citation cards with rank indicators, categorized prompt library, dual-viewport visual PDF inspector with text keyword search highlighting, multi-document comparison matrix, and Markdown/JSON export.
 - **Comprehensive Automated Test Suite**: 17 Pytest test cases covering retrieval, multimodal parsers, input validation, and API routes.
 - **Docker & Compose Ready**: Containerized backend and frontend with Docker Compose support.
 
@@ -32,7 +32,7 @@ flowchart LR
     end
 
     subgraph Runtime Pipeline
-        F[User Question] --> G[Streamlit Studio Pro]
+        F[User Question] --> G[React + Vite Studio Pro]
         G --> H[FastAPI /query]
         H --> I[Hybrid Search: Dense + BM25 RRF]
         I --> J[Cross-Encoder Re-Ranking]
@@ -53,9 +53,9 @@ flowchart LR
 | **RAG / Vector Database** | SentenceTransformers (`all-MiniLM-L6-v2`), Cross-Encoder (`ms-marco-MiniLM-L-6-v2`), ChromaDB, BM25 Okapi |
 | **Document Parsers** | PyPDF, python-pptx, openpyxl, pandas, zipfile XML parsing |
 | **Local LLM** | Ollama (`llama3:8b`, `mistral`) |
-| **Frontend UI** | Streamlit, Glassmorphism CSS |
+| **Frontend UI** | React 19, Vite, Cyber-Glassmorphism CSS, Lucide Icons |
 | **Evaluation Suite** | Ragas Triad (Faithfulness, Relevance, Context Precision & Recall) |
-| **DevOps & Containers** | Docker, Docker Compose, Git |
+| **DevOps & Containers** | Docker, Docker Compose, Nginx, Git |
 
 ---
 
@@ -93,11 +93,16 @@ rag-assistant-project/
 │   └── Dockerfile
 │
 ├── frontend/
-│   ├── app.py                       # Streamlit web application
-│   ├── api_client.py                # HTTP client calling backend endpoints
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── Dockerfile
+│   ├── src/                         # React SPA components, hooks, & services
+│   │   ├── components/              # ChatStudio, DocumentLibrary, VisualPdfViewer, ComparisonMatrix, AnalyticsView
+│   │   ├── services/api.js          # Decoupled FastAPI client
+│   │   ├── App.jsx                  # Main SPA routing & state
+│   │   └── index.css                # Cyber-glassmorphism design system
+│   ├── package.json                 # Node dependencies
+│   ├── vite.config.js               # Vite config with FastAPI proxy
+│   ├── index.html                   # HTML entry point with Google Fonts
+│   ├── nginx.conf                   # Production Nginx reverse proxy
+│   └── Dockerfile                   # Multi-stage container build
 │
 ├── data/
 │   ├── raw/                         # PDF course materials (sample academic documents)
@@ -131,8 +136,13 @@ python -m venv .venv
 # Activate on Linux/macOS:
 # source .venv/bin/activate
 
-# Install root dependencies
-pip install -r backend/requirements.txt -r frontend/requirements.txt
+# Install backend dependencies
+pip install -r backend/requirements.txt
+
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
 ```
 
 ### 2. Generate Sample PDFs & Build Vector Store
@@ -171,12 +181,12 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 - Health Check: [http://localhost:8000/health](http://localhost:8000/health)
 
-#### Start Streamlit Frontend (In a new terminal window)
+#### Start React + Vite Frontend (In a new terminal window)
 ```bash
 cd frontend
-streamlit run app.py --server.port 8501
+npm run dev
 ```
-- Open browser at: [http://localhost:8501](http://localhost:8501)
+- Open browser at: [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -187,6 +197,8 @@ To launch backend and frontend inside Docker containers:
 ```bash
 docker-compose up --build
 ```
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend: [http://localhost:8000](http://localhost:8000)
 
 ---
 
@@ -291,7 +303,8 @@ Returns detailed analytics on vector storage, chunk distribution, and connected 
 | `CHUNK_SIZE` | `800` | Text chunk character length |
 | `CHUNK_OVERLAP` | `150` | Text chunk character overlap |
 | `TOP_K` | `4` | Number of context chunks retrieved |
-| `API_BASE_URL` | `http://localhost:8000` | Backend API URL accessed by Streamlit |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API URL accessed by React frontend |
+| `CORS_ORIGINS` | `["http://localhost:3000", "http://127.0.0.1:3000"]` | Allowed browser origins for CORS |
 
 ---
 
