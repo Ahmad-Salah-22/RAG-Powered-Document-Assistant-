@@ -114,7 +114,7 @@ class CompareDocumentsRequest(BaseModel):
     doc_a: str = Field(..., description="Filename of the first document.")
     doc_b: str = Field(..., description="Filename of the second document.")
     comparison_topic: Optional[str] = Field(
-        default="Core concepts, algorithms, complexity trade-offs, and practical use cases",
+        default="Core concepts, methodologies, key findings, and practical implications",
         description="Focal topic or theme for the comparative evaluation."
     )
     model: Optional[str] = Field(default=None, description="Optional LLM model override.")
@@ -142,6 +142,19 @@ class DocumentPageResponse(BaseModel):
     has_file: bool = False
     file_type: str = "pdf"
     highlight_positions: Optional[List[Dict[str, Any]]] = None
+
+
+class DocumentPageSummaryResponse(BaseModel):
+    """Structured AI summary and key takeaways for a specific page of a document."""
+    document_name: str = Field(..., description="Filename of the document.")
+    page_number: int = Field(..., description="Page number summarized.")
+    total_pages: int = Field(..., description="Total pages in the document.")
+    summary: str = Field(..., description="Narrative summary of the page.")
+    key_points: List[str] = Field(default_factory=list, description="Key bullet points extracted from the page.")
+    main_topic: Optional[str] = Field(None, description="Primary theme or topic of the page.")
+    char_count: int = Field(0, description="Character count of the raw page text.")
+    model_used: str = Field("heuristic", description="Model or method used for summarization.")
+    latency_ms: float = Field(0.0, description="Time taken to summarize in milliseconds.")
 
 
 class HealthResponse(BaseModel):

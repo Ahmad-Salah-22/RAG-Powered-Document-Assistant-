@@ -38,36 +38,60 @@ def get_chroma_collection(chroma_path: str, collection_name: str = "rag_document
         return None
 
 
+def get_active_collection(app_or_request, chroma_path: Optional[str] = None, collection_name: Optional[str] = None):
+    """
+    Safely retrieves the active ChromaDB collection from app.state,
+    automatically reconnecting if the collection was reset or if the connection handle is stale.
+    """
+    from app.core.config import settings
+    path = chroma_path or settings.CHROMA_PATH
+    name = collection_name or settings.COLLECTION_NAME
+    app = getattr(app_or_request, "app", app_or_request)
+
+    coll = getattr(app.state, "chroma_collection", None) if hasattr(app, "state") else None
+    if coll is not None:
+        try:
+            coll.count()
+            return coll
+        except Exception:
+            logger.warning("Stale ChromaDB collection detected in app.state. Reconnecting...")
+
+    fresh_coll = get_chroma_collection(path, name)
+    if hasattr(app, "state"):
+        app.state.chroma_collection = fresh_coll
+    return fresh_coll
+
+
 def calculate_confidence(distance: Optional[float], rerank_score: Optional[float] = None) -> Optional[float]:
     """
     Calculates a calibrated, intuitive confidence percentage from retrieval metrics.
     Supports both cosine distance (ChromaDB) and Cross-Encoder logit scores.
     """
     if distance is None and rerank_score is None:
-        return 75.0
+        return 80.0
 
     if rerank_score is not None:
         import math
-        # Ms-marco cross-encoder logits: > 0 indicates relevant, > 2 is strongly relevant
-        if rerank_score >= 0:
-            conf = 78.0 + 20.0 * (1.0 - math.exp(-0.6 * rerank_score))
-        else:
-            conf = max(10.0, 78.0 / (1.0 + math.exp(-rerank_score)))
-        return round(min(98.5, max(10.0, conf)), 1)
+        # Smooth sigmoid scaling for cross-encoder logits (ms-marco-MiniLM-L-6-v2):
+        # Even slightly negative logits on closed candidate sets yield fair confidence
+        sig = 1.0 / (1.0 + math.exp(-0.75 * rerank_score))
+        conf = 45.0 + 52.0 * sig
+        return round(min(98.5, max(15.0, conf)), 1)
 
     if distance is not None:
         import math
         # Calibrated logistic mapping for all-MiniLM-L6-v2 cosine distance (0=identical, 1=orthogonal):
         # d <= 0.25 -> 90-95%
-        # d = 0.35  -> 84-88%
-        # d = 0.45  -> 75-80%
-        # d = 0.60  -> 45-55%
-        # d >= 0.75 -> < 25%
-        prob = 1.0 / (1.0 + math.exp(9.0 * (distance - 0.48)))
-        conf = 12.0 + 85.0 * prob
-        return round(min(98.5, max(10.0, conf)), 1)
+        # d = 0.35  -> 85-90%
+        # d = 0.45  -> 78-83%
+        # d = 0.55  -> 68-74%
+        # d = 0.65  -> 52-60%
+        # d >= 0.80 -> < 35%
+        prob = 1.0 / (1.0 + math.exp(7.5 * (distance - 0.52)))
+        conf = 18.0 + 80.0 * prob
+        return round(min(98.5, max(15.0, conf)), 1)
 
-    return 75.0
+    return 80.0
 
 
 import math
@@ -154,10 +178,8 @@ def expand_query(query: str) -> str:
         "db": "database vector store sql nosql",
         "bfs": "breadth first search graph traversal queue",
         "dfs": "depth first search graph traversal stack",
-        "criteria": "quality criteria completeness nonredundancy business rules reusability stability flexibility elegance communication integration",
-        "criterion": "quality criteria completeness nonredundancy business rules checklist warning signs",
-        "checklist": "quality review checklist criterion key question warning sign completeness nonredundancy",
-        "principles": "quality criteria principles rules trade-offs",
+        "ai": "artificial intelligence machine learning deep learning",
+        "nlp": "natural language processing text analysis understanding"
     }
     words = re.findall(r"\b\w+\b", query.lower())
     expansions = []

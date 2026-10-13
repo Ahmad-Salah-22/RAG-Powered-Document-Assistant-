@@ -13,7 +13,7 @@ Your task is to answer the user's question using ONLY the provided document cont
 
 Strict Grounding & Readability Rules:
 1. Base your answer ENTIRELY on the provided context blocks.
-2. When the question asks for criteria, principles, components, or checklists, extract and synthesize all corresponding items (including numbered items, bullet points, checklist questions, or warning signs) found in the context (e.g. from sections like 'What makes a good...', quality review checklists, or trade-offs), and present them clearly with their explanations.
+2. When the question asks for criteria, principles, components, summaries, or checklists, extract and synthesize all corresponding items found in the context, and present them clearly with their explanations and definitions.
 3. If the context does not contain relevant information to answer, state clearly: "I could not find relevant information in the provided documents to answer your question."
 4. Do NOT invent facts or make outside assumptions.
 5. Always cite your sources precisely using the format: [Document Name, Page X].
@@ -32,7 +32,7 @@ Grounded Academic Answer with Citations:""",
 
 Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. When criteria, checklists, or principles are requested, list all matching items directly with their core definitions and citations.
+2. When criteria, checklists, or core principles are requested, list all matching items directly with their core definitions and citations.
 3. Provide the direct answer in clean bullet points or concise sentences.
 4. Cite sources at the end of each bullet: [Document Name, Page X].
 5. If the context does not answer the question, state: "I could not find relevant information in the provided documents to answer your question."
@@ -51,9 +51,9 @@ Concise Grounded Answer:""",
 
 Strict Grounding & Readability Rules:
 1. Base your answer ONLY on the provided context.
-2. When criteria, checklists, or principles are requested, explain each criterion thoroughly with its definition, rationale, checklist verification questions, and warning signs from the context.
+2. When criteria, methodologies, or principles are requested, explain each element thoroughly with its definition, rationale, key questions, and examples from the context.
 3. Break down the concept step-by-step with clean, intuitive section headings in title case.
-4. Include relevant definitions, code, or formulas if present in the text.
+4. Include relevant definitions, formulas, or structured details if present in the text.
 5. Always cite specific sources: [Document Name, Page X].
 6. If the context is insufficient, state clearly: "I could not find relevant information in the provided documents to answer your question."
 7. Style & Readability: Write in a pleasant, conversational tone. Avoid robotic language and avoid writing words or headings in ALL CAPS. Keep explanations effortless to read.
@@ -71,10 +71,10 @@ Detailed Tutorial-Style Answer with Citations:""",
 
 Strict Grounding & Readability Rules:
 1. Base your synthesis ONLY on the provided context.
-2. When criteria or review checklists are requested, summarize every criterion and checklist dimension concisely.
+2. When summarizing or evaluating, present the core ideas, main findings, and actionable takeaways.
 3. Provide:
    - **Executive Summary** (1-2 clear, readable paragraphs in natural sentence case)
-   - **Key Takeaways & Criteria Checklist** (3-6 clean bullet points with citations: [Document Name, Page X])
+   - **Key Takeaways & Core Points** (3-6 clean bullet points with citations: [Document Name, Page X])
 4. If not found in documents, state: "I could not find relevant information in the provided documents to answer your question."
 5. Style: Highly legible and user-friendly. Never use unnecessary ALL CAPS words.
 
@@ -296,3 +296,192 @@ async def generate_grounded_answer(
         if allow_fallback:
             return enhance_user_facing_answer(generate_extractive_fallback_answer(question, context)), True, True
         return f"Error: {str(e)}", False, False
+
+
+_page_summary_cache: Dict[Tuple[str, int, int], Dict[str, Any]] = {}
+
+
+def generate_extractive_page_summary(page_text: str, document_name: str, page_number: int) -> Dict[str, Any]:
+    """
+    Produces structured extractive summary from raw page text without requiring an external LLM.
+    """
+    clean_text = " ".join(page_text.split())
+    if not clean_text or len(clean_text) < 20:
+        return {
+            "main_topic": "Visual or Blank Page",
+            "summary": "This page does not contain extractable text content. It may contain charts, figures, or unindexed scanned images.",
+            "key_points": [
+                "No readable machine text extracted.",
+                "Inspect the visual PDF viewer on the right to review diagrams or images."
+            ],
+            "model_used": "Extractive Fallback"
+        }
+
+    # Split text into sentences
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", clean_text) if len(s.strip()) > 20]
+    
+    # Try to derive main topic from early lines or first sentence
+    first_lines = [l.strip() for l in page_text.split("\n") if l.strip()]
+    main_topic = None
+    if first_lines and len(first_lines[0]) < 80 and not first_lines[0].endswith("."):
+        main_topic = first_lines[0]
+    elif sentences:
+        main_topic = sentences[0][:60] + "..." if len(sentences[0]) > 60 else sentences[0]
+    else:
+        main_topic = f"Content Overview (Page {page_number})"
+
+    # Clean main topic
+    main_topic = re.sub(r"^[0-9.\-–\s]+", "", main_topic).strip() or f"Page {page_number} Overview"
+
+    # Select top 2-3 most informative sentences for summary
+    summary_sentences = sentences[:3] if len(sentences) >= 3 else sentences
+    summary = " ".join(summary_sentences) if summary_sentences else clean_text[:300]
+
+    # Generate key points from subsequent sentences or bullet items
+    key_points = []
+    # Check for existing bullet points in page text
+    bullet_matches = re.findall(r"(?:^|\n)\s*[•\-\*]\s*([^\n]+)", page_text)
+    if bullet_matches:
+        for b in bullet_matches[:5]:
+            b_clean = b.strip()
+            if len(b_clean) > 15:
+                key_points.append(b_clean)
+
+    if not key_points and len(sentences) > 2:
+        for s in sentences[2:6]:
+            if s not in summary:
+                key_points.append(s)
+
+    if not key_points:
+        # Fallback chunks
+        words = clean_text.split()
+        if len(words) > 30:
+            key_points = [
+                f"Covers key concepts: {', '.join(words[:10])}...",
+                f"Section highlights: {', '.join(words[20:30])}..."
+            ]
+        else:
+            key_points = ["Contains brief introductory or concluding statements for this section."]
+
+    return {
+        "main_topic": enhance_user_facing_answer(main_topic),
+        "summary": enhance_user_facing_answer(summary),
+        "key_points": [enhance_user_facing_answer(kp) for kp in key_points[:5]],
+        "model_used": "Extractive Fallback"
+    }
+
+
+async def summarize_page_content(
+    document_name: str,
+    page_number: int,
+    page_text: str,
+    ollama_host: str = settings.OLLAMA_HOST,
+    ollama_model: str = settings.OLLAMA_MODEL,
+    timeout: float = 30.0,
+    force_refresh: bool = False
+) -> Dict[str, Any]:
+    """
+    Generates a structured, concise AI summary and key takeaways for a specific page of a document.
+    Returns:
+        Dict with keys: main_topic, summary, key_points, model_used, latency_ms
+    """
+    import time
+    t_start = time.perf_counter()
+
+    char_len = len(page_text.strip()) if page_text else 0
+    cache_key = (document_name, page_number, char_len)
+
+    if not force_refresh and cache_key in _page_summary_cache:
+        cached = dict(_page_summary_cache[cache_key])
+        cached["latency_ms"] = 0.5
+        return cached
+
+    if not page_text or char_len < 25:
+        fallback_res = generate_extractive_page_summary(page_text, document_name, page_number)
+        fallback_res["latency_ms"] = round((time.perf_counter() - t_start) * 1000.0, 2)
+        _page_summary_cache[cache_key] = fallback_res
+        return fallback_res
+
+    # Attempt generation with Ollama
+    ollama_active = await check_ollama_availability(ollama_host)
+    if ollama_active:
+        prompt = f"""You are an expert document analyst. Summarize Page {page_number} of "{document_name}" based on the text below.
+
+Instructions:
+1. Provide a single phrase for the Main Topic.
+2. Provide a 2-3 sentence clear Executive Summary of what this page discusses.
+3. Provide 3-5 concise bullet points highlighting the most important takeaways, definitions, findings, or criteria.
+4. Use clear, friendly, natural sentence casing. Avoid all-caps shouting.
+
+Strict Output Format:
+TOPIC: <Single phrase representing this page>
+SUMMARY: <2-3 sentence summary>
+KEY POINTS:
+- <Key takeaway 1>
+- <Key takeaway 2>
+- <Key takeaway 3>
+
+Page Content:
+{page_text[:3500]}
+
+Structured Summary:"""
+
+        payload = {
+            "model": ollama_model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.2,
+                "top_p": 0.9,
+            }
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                res = await client.post(f"{ollama_host.rstrip('/')}/api/generate", json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    response_text = data.get("response", "").strip()
+
+                    # Parse structured response
+                    topic_match = re.search(r"TOPIC:\s*(.+?)(?=\n|SUMMARY:|$)", response_text, re.IGNORECASE)
+                    summary_match = re.search(r"SUMMARY:\s*(.+?)(?=\nKEY POINTS:|\n-|$)", response_text, re.IGNORECASE | re.DOTALL)
+                    key_points_match = re.search(r"KEY POINTS:\s*(.+)$", response_text, re.IGNORECASE | re.DOTALL)
+
+                    main_topic = topic_match.group(1).strip() if topic_match else f"Page {page_number} Overview"
+                    summary = summary_match.group(1).strip() if summary_match else ""
+                    
+                    key_points = []
+                    if key_points_match:
+                        raw_pts = key_points_match.group(1).strip()
+                        for line in raw_pts.split("\n"):
+                            pt = re.sub(r"^[•\-\*\d.]+\s*", "", line).strip()
+                            if pt and len(pt) > 5:
+                                key_points.append(pt)
+
+                    if not summary and response_text:
+                        summary = response_text[:350]
+
+                    if not key_points and summary:
+                        # Extract sentences as points
+                        sents = [s.strip() for s in summary.split(".") if len(s.strip()) > 15]
+                        key_points = sents[:3]
+
+                    result = {
+                        "main_topic": enhance_user_facing_answer(main_topic),
+                        "summary": enhance_user_facing_answer(summary),
+                        "key_points": [enhance_user_facing_answer(k) for k in key_points[:5]],
+                        "model_used": ollama_model,
+                        "latency_ms": round((time.perf_counter() - t_start) * 1000.0, 2)
+                    }
+                    _page_summary_cache[cache_key] = result
+                    return result
+
+        except Exception as e:
+            logger.warning(f"Ollama page summarization failed ({e}). Reverting to extractive summary.")
+
+    # Extractive fallback
+    fallback_res = generate_extractive_page_summary(page_text, document_name, page_number)
+    fallback_res["latency_ms"] = round((time.perf_counter() - t_start) * 1000.0, 2)
+    _page_summary_cache[cache_key] = fallback_res
+    return fallback_res

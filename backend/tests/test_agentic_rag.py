@@ -50,3 +50,22 @@ def test_grade_context_relevance_empty():
     assert not grading["is_sufficient"]
     assert grading["average_confidence"] == 0.0
     assert grading["relevant_count"] == 0
+
+
+def test_classify_and_decompose_intent_summary():
+    """Validates decomposition for document summary questions."""
+    res = classify_and_decompose_intent("Summarize the key takeaways of the document")
+    assert res["intent_type"] == "document_summary"
+    assert res["is_complex"]
+    assert len(res["sub_queries"]) >= 2
+
+
+def test_classify_and_decompose_intent_criteria_general():
+    """Validates that criteria evaluation intent does not inject hardcoded data model keywords."""
+    res = classify_and_decompose_intent("What are the evaluation criteria for clinical diagnosis?")
+    assert res["intent_type"] == "criteria_and_quality_evaluation"
+    assert res["is_complex"]
+    # Ensure no data model hardcoding is present
+    for sq in res["sub_queries"]:
+        assert "data model" not in sq.lower()
+        assert "nonredundancy" not in sq.lower()

@@ -74,22 +74,22 @@ export default function AnalyticsView() {
                   cy={cy}
                   r={r * level}
                   fill="none"
-                  stroke="rgba(255, 255, 255, 0.08)"
+                  stroke="var(--border-medium)"
                   strokeDasharray={level < 1.0 ? '3 3' : 'none'}
                 />
               ))}
 
               {/* Axis Cross Lines */}
-              <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke="rgba(255, 255, 255, 0.12)" />
-              <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="rgba(255, 255, 255, 0.12)" />
+              <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke="var(--border-medium)" />
+              <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke="var(--border-medium)" />
 
               {/* Data Polygon */}
               <polygon
                 points={polygonPoints}
                 fill="rgba(99, 102, 241, 0.25)"
-                stroke="#6366f1"
+                stroke="var(--accent-primary)"
                 strokeWidth="2.5"
-                style={{ filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.6))' }}
+                style={{ filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.4))' }}
               />
 
               {/* Data Points */}
@@ -99,15 +99,15 @@ export default function AnalyticsView() {
               <circle cx={pLeft.x} cy={pLeft.y} r="4" fill="#a855f7" />
 
               {/* Axis Labels */}
-              <text x={cx} y={cy - r - 12} textAnchor="middle" fill="#10b981" fontSize="11" fontWeight="700">Faithfulness (94%)</text>
-              <text x={cx + r + 8} y={cy + 4} textAnchor="start" fill="#06b6d4" fontSize="11" fontWeight="700">Relevance (91.5%)</text>
-              <text x={cx} y={cy + r + 18} textAnchor="middle" fill="#6366f1" fontSize="11" fontWeight="700">Precision (92.8%)</text>
-              <text x={cx - r - 8} y={cy + 4} textAnchor="end" fill="#a855f7" fontSize="11" fontWeight="700">Recall (89.2%)</text>
+              <text x={cx} y={cy - r - 12} textAnchor="middle" fill="var(--accent-emerald)" fontSize="11" fontWeight="700">Faithfulness (94%)</text>
+              <text x={cx + r + 8} y={cy + 4} textAnchor="start" fill="var(--accent-cyan)" fontSize="11" fontWeight="700">Relevance (91.5%)</text>
+              <text x={cx} y={cy + r + 18} textAnchor="middle" fill="var(--accent-primary)" fontSize="11" fontWeight="700">Precision (92.8%)</text>
+              <text x={cx - r - 8} y={cy + 4} textAnchor="end" fill="var(--accent-purple)" fontSize="11" fontWeight="700">Recall (89.2%)</text>
             </svg>
           </div>
 
           <div style={{ marginTop: '20px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Overall Triad Score: <strong style={{ color: '#ffffff' }}>92.0% (Production Grade)</strong>
+            Overall Triad Score: <strong style={{ color: 'var(--text-primary)' }}>92.0% (Production Grade)</strong>
           </div>
         </div>
 
@@ -116,9 +116,9 @@ export default function AnalyticsView() {
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Production Readiness Matrix</h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={20} color="#10b981" />
+            <div style={{ background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--badge-emerald-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={20} color="var(--accent-emerald)" />
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Sub-50ms Vector Retrieval Latency</div>
@@ -126,9 +126,9 @@ export default function AnalyticsView() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={20} color="#818cf8" />
+            <div style={{ background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--badge-indigo-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={20} color="var(--accent-primary)" />
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>100% Anti-Hallucination Guardrail</div>
@@ -136,9 +136,9 @@ export default function AnalyticsView() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(6, 182, 212, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Activity size={20} color="#22d3ee" />
+            <div style={{ background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--badge-cyan-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Activity size={20} color="var(--accent-cyan)" />
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Cross-Attention Re-Ranking Layer</div>

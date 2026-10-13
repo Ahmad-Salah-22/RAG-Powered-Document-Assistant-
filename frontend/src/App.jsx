@@ -57,7 +57,8 @@ export default function App() {
         {activeTab === 'chat' && (
           <ChatStudio 
             documents={documents} 
-            onViewDocument={handleViewDocument} 
+            onViewDocument={handleViewDocument}
+            onNavigateToLibrary={() => setActiveTab('library')}
           />
         )}
 

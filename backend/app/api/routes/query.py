@@ -73,6 +73,23 @@ async def query_documents(payload: QueryRequest, request: Request):
             detail="Vector database or embedding service is unavailable."
         )
 
+    # Empty document index check
+    if collection.count() == 0:
+        logger.info(f"Query '{question}' received but vector store has 0 indexed chunks.")
+        return QueryResponse(
+            answer="No documents are currently indexed in the assistant. Please upload your PDF or project documents in the Document Library to begin querying.",
+            sources=[],
+            model_used=payload.model or settings.OLLAMA_MODEL,
+            latency_ms=round((time.perf_counter() - start_total) * 1000.0, 2),
+            retrieval_latency_ms=0.0,
+            generation_latency_ms=0.0,
+            fallback_used=False,
+            retrieval_mode=payload.retrieval_mode or "hybrid",
+            reranker_used=False,
+            agentic_active=False,
+            confidence_score=0.0
+        )
+
     # Retrieval parameters
     top_k = payload.top_k or settings.TOP_K
     model_name = payload.model or settings.OLLAMA_MODEL

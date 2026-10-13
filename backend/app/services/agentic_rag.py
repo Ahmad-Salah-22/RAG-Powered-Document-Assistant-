@@ -22,36 +22,39 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
     criteria_keywords = [
         "criteria", "criterion", "checklist", "principles", "quality", 
         "warning sign", "warning signs", "trade-off", "trade-offs", "tradeoff", "tradeoffs",
-        "evaluation", "good data model", "what makes a good", "quality review"
+        "evaluation", "what makes a good", "quality review"
     ]
     is_criteria = any(kw in q_lower for kw in criteria_keywords)
 
     # Comparison intent patterns
-    compare_keywords = ["compare", "difference between", "versus", "vs", "tradeoff", "trade-off", "contrast", "differ"]
+    compare_keywords = ["compare", "difference between", "versus", "vs", "contrast", "differ"]
     is_compare = any(kw in q_lower for kw in compare_keywords)
 
+    # Document summary intent
+    summary_keywords = ["summarize", "summary", "overview", "executive summary", "key takeaways", "takeaway", "takeaways", "main points", "main findings", "core findings", "abstract"]
+    is_summary = any(kw in q_lower for kw in summary_keywords)
+
     # Synthesis / deep explanation intent
-    synthesis_keywords = ["explain in detail", "summarize", "overview of", "breakdown", "how does", "why does", "deep dive"]
+    synthesis_keywords = ["explain in detail", "breakdown", "how does", "why does", "deep dive", "walk through", "elaborate"]
     is_synthesis = any(kw in q_lower for kw in synthesis_keywords)
 
-    # Numerical / performance intent
+    # Numerical / algorithmic performance intent
     complexity_keywords = ["complexity", "big o", "runtime", "speed", "worst case", "average case", "memory"]
     is_complexity = any(kw in q_lower for kw in complexity_keywords)
 
     if is_criteria:
         intent_type = "criteria_and_quality_evaluation"
         sub_queries = [
-            f"What makes a good data model? Completeness Nonredundancy Enforces business rules Data reusability Stability flexibility Elegance Communication Integration {question}",
-            f"Quality review checklist Criterion Question to ask Warning sign Completeness Nonredundancy Business rules Reusability {question}",
-            f"Conflicting objectives and trade-offs in quality criteria: Flexibility vs Rule enforcement Elegance vs Communication {question}"
+            f"Core criteria, standards, requirements, and principles in {question}",
+            f"Checklist, evaluation guidelines, warning signs, and verification rules for {question}",
+            f"Conflicting objectives, trade-offs, and critical considerations regarding {question}"
         ]
-        reasoning_summary = "Detected document quality criteria / checklist evaluation intent. Decomposed into quality criteria definitions, review checklist warning signs, and conflicting trade-offs."
+        reasoning_summary = "Detected document criteria / quality evaluation intent. Decomposed into standards, checklist guidelines, and trade-offs."
         is_complex = True
 
     elif is_compare:
         intent_type = "multi_hop_comparison"
         # Extract potential entities to split
-        # Example: "Compare hash table vs binary search tree" -> sub queries
         sub_queries = []
         if " vs " in q_lower:
             parts = re.split(r"\s+vs\s+", question, flags=re.IGNORECASE)
@@ -66,9 +69,18 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
         if not sub_queries:
             sub_queries = [
                 f"Core properties and characteristics of {question}",
-                f"Performance trade-offs and structural differences in {question}"
+                f"Key trade-offs, advantages, and differences in {question}"
             ]
-        reasoning_summary = f"Detected multi-hop comparison query. Decomposed into {len(sub_queries)} targeted sub-queries for parallel context retrieval."
+        reasoning_summary = f"Detected comparative query. Decomposed into {len(sub_queries)} targeted sub-queries for parallel context retrieval."
+        is_complex = True
+
+    elif is_summary:
+        intent_type = "document_summary"
+        sub_queries = [
+            f"Executive summary, main topic, and objective of {question}",
+            f"Key findings, conclusions, core arguments, and takeaways from {question}"
+        ]
+        reasoning_summary = "Detected document summary and synthesis intent. Decomposed into executive overview and core findings retrieval passes."
         is_complex = True
 
     elif is_complexity:
@@ -77,7 +89,7 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
             f"Algorithmic runtime and memory complexity of {question}",
             f"Underlying mechanism and mathematical bounds for {question}"
         ]
-        reasoning_summary = "Detected algorithmic complexity query. Expanding retrieval targets for time/space complexity specifications."
+        reasoning_summary = "Detected performance complexity query. Expanding retrieval targets for time/space complexity specifications."
         is_complex = True
 
     elif is_synthesis:
@@ -106,7 +118,7 @@ def classify_and_decompose_intent(question: str) -> Dict[str, Any]:
 def grade_context_relevance(
     question: str,
     sources: List[SourceItem],
-    threshold: float = 65.0
+    threshold: float = 60.0
 ) -> Dict[str, Any]:
     """
     Self-Reflective RAG (CRAG) grader:
@@ -122,13 +134,18 @@ def grade_context_relevance(
             "filtered_sources": []
         }
 
-    confidences = [s.confidence_percent if s.confidence_percent is not None else 60.0 for s in sources]
+    confidences = [s.confidence_percent if s.confidence_percent is not None else 65.0 for s in sources]
 
-    # Filter out chunks that fall well below threshold (e.g. < 40% confidence)
-    graded_sources = [s for s in sources if (s.confidence_percent or 0.0) >= 40.0]
+    # Retain chunks with reasonable confidence (>= 30% confidence)
+    graded_sources = [s for s in sources if (s.confidence_percent or 0.0) >= 30.0]
+    if not graded_sources and sources:
+        # If all were < 30%, keep the single top-ranked candidate if it has at least 20% confidence
+        if (sources[0].confidence_percent or 0.0) >= 20.0:
+            graded_sources = [sources[0]]
+
     relevant_count = len(graded_sources)
 
-    # Compute grounded confidence from the top retained chunks passed to the generator
+    # Compute grounded confidence from top retained chunks
     top_confs = [s.confidence_percent for s in graded_sources[:6] if s.confidence_percent is not None]
     if top_confs:
         avg_conf = sum(top_confs) / len(top_confs)
@@ -139,11 +156,11 @@ def grade_context_relevance(
 
     if is_sufficient:
         assessment = f"Context graded as HIGH QUALITY (Avg confidence: {avg_conf:.1f}% across {relevant_count} chunks). Passing to grounded generator."
-    elif relevant_count > 0 and avg_conf >= 35.0:
+    elif relevant_count > 0 and avg_conf >= 28.0:
         assessment = f"Context graded as PARTIALLY SUFFICIENT (Avg confidence: {avg_conf:.1f}%). Supplemental corrective context applied."
     else:
         assessment = f"Context graded as LOW RELEVANCE / OFF-TOPIC (Avg confidence: {avg_conf:.1f}%). Warning: Chunks do not match query intent."
-        graded_sources = []  # Explicitly clear chunks for off-topic questions
+        graded_sources = []  # Clear chunks for truly off-topic queries
 
     return {
         "average_confidence": round(avg_conf, 1),

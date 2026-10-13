@@ -17,11 +17,14 @@ import {
   User, 
   Zap, 
   BrainCircuit, 
-  Filter 
+  Filter,
+  UploadCloud,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { submitQuery } from '../services/api';
 
-export default function ChatStudio({ documents, onViewDocument }) {
+export default function ChatStudio({ documents, onViewDocument, onNavigateToLibrary }) {
   // Session State
   const [sessions, setSessions] = useState([
     { id: 'session-1', title: 'New Research Chat', messages: [] }
@@ -45,47 +48,39 @@ export default function ChatStudio({ documents, onViewDocument }) {
 
   const messagesEndRef = useRef(null);
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
+  const hasDocuments = Boolean(documents && documents.length > 0);
 
   const dynamicSuggestions = React.useMemo(() => {
     if (!documents || documents.length === 0) {
-      return [
-        { category: 'Document Library', text: 'Upload your research papers or project documents in the Document Library to begin querying.' }
-      ];
+      return [];
     }
 
     const suggestions = [];
-    const docNames = documents.map(d => d.document_name.toLowerCase());
 
-    // When Data Modeling documents are indexed
-    if (docNames.some(n => n.includes('data_modeling') || n.includes('model'))) {
+    // Dynamically generate high-quality questions for any uploaded document type
+    documents.slice(0, 3).forEach((doc) => {
+      const cleanName = doc.document_name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .trim();
+
       suggestions.push(
-        { category: 'Quality Criteria', text: 'What are the eight quality criteria of a good data model?' },
-        { category: 'Review Checklist', text: 'What are the key questions and warning signs in the Quality Review Checklist?' },
-        { category: 'Criteria Trade-offs', text: 'What are the conflicting objectives and trade-offs in data model quality criteria?' },
-        { category: 'Architecture', text: 'Explain the three-schema architecture (conceptual, logical, physical) and why data modeling is a design activity.' }
+        { category: 'Executive Summary', text: `Summarize the primary takeaways and key conclusions of ${doc.document_name}.` },
+        { category: 'Core Findings', text: `What are the core methodologies, principles, or frameworks defined in ${doc.document_name}?` },
+        { category: 'Key Concepts', text: `Explain the main definitions, facts, and essential takeaways from ${doc.document_name}.` }
       );
-    }
-
-    // When Data Discovery presentation is indexed
-    if (docNames.some(n => n.includes('discovery'))) {
-      suggestions.push(
-        { category: 'Data Discovery', text: 'What are the core stages and methodologies of Data Discovery?' },
-        { category: 'Executive Summary', text: 'Summarize the primary actionable takeaways and findings from Data Discovery.' }
-      );
-    }
-
-    // Dynamic suggestions for any custom user-uploaded files
-    documents.forEach(doc => {
-      const lower = doc.document_name.toLowerCase();
-      if (!lower.includes('data_modeling') && !lower.includes('discovery')) {
-        suggestions.push(
-          { category: doc.document_name.slice(0, 16), text: `What are the core criteria and methodologies defined in ${doc.document_name}?` },
-          { category: 'Executive Summary', text: `Summarize the key takeaways and architectural principles from ${doc.document_name}.` }
-        );
-      }
     });
 
-    return suggestions.slice(0, 6);
+    if (documents.length >= 2) {
+      const docA = documents[0].document_name;
+      const docB = documents[1].document_name;
+      suggestions.push({
+        category: 'Comparative Analysis',
+        text: `Compare the primary themes, similarities, and differences between ${docA} and ${docB}.`
+      });
+    }
+
+    return suggestions.slice(0, 5);
   }, [documents]);
 
   useEffect(() => {
@@ -120,6 +115,10 @@ export default function ChatStudio({ documents, onViewDocument }) {
   const handleSend = async (questionText = inputValue) => {
     const textToSend = questionText.trim();
     if (!textToSend || isLoading) return;
+
+    if (!hasDocuments) {
+      return;
+    }
 
     setInputValue('');
 
@@ -392,60 +391,95 @@ export default function ChatStudio({ documents, onViewDocument }) {
           
           {/* Welcome Screen & Prompt Library if no messages */}
           {activeSession.messages.length === 0 && (
-            <div className="animate-fade-in" style={{ margin: 'auto', maxWidth: '680px', textAlign: 'center', padding: '40px 20px' }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '18px',
-                background: 'var(--gradient-brand)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 20px',
-                boxShadow: '0 0 30px rgba(99, 102, 241, 0.4)'
-              }}>
-                <Sparkles size={32} color="#ffffff" />
-              </div>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '8px' }}>
-                Ask your documents anything
-              </h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '28px' }}>
-                Hybrid SOTA dense vector + BM25 retrieval with deep cross-encoder re-ranking and auditable page-level citations.
-              </p>
-
-              {/* Categorized Prompt Suggestions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  <span>Recommended Questions</span>
-                  <span style={{ fontSize: '0.7rem', color: '#818cf8', textTransform: 'none', fontWeight: 500 }}>
-                    Grounding from {documents?.length || 0} active project file{documents?.length === 1 ? '' : 's'}
-                  </span>
+            !hasDocuments ? (
+              <div className="animate-fade-in" style={{ margin: 'auto', maxWidth: '620px', textAlign: 'center', padding: '40px 20px' }}>
+                <div style={{
+                  width: '68px',
+                  height: '68px',
+                  borderRadius: '20px',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2))',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 20px',
+                  boxShadow: '0 0 30px rgba(99, 102, 241, 0.2)'
+                }}>
+                  <UploadCloud size={34} color="#818cf8" />
                 </div>
-                {dynamicSuggestions.map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSend(item.text)}
-                    className="glass-panel"
-                    style={{
-                      padding: '12px 16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-subtle)',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      textAlign: 'left'
-                    }}
-                  >
-                    <div>
-                      <span className="badge badge-indigo" style={{ marginRight: '10px' }}>{item.category}</span>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{item.text}</span>
-                    </div>
-                    <Send size={14} color="#818cf8" />
-                  </button>
-                ))}
+                <h2 style={{ fontSize: '1.65rem', fontWeight: 800, marginBottom: '10px' }}>
+                  Document Library is Empty
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                  Upload your research papers, technical reports, medical publications, or project PDFs in the Document Library to begin querying with verified citations.
+                </p>
+                <button
+                  onClick={onNavigateToLibrary}
+                  className="btn btn-primary"
+                  style={{ padding: '12px 24px', fontSize: '0.9rem', margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <UploadCloud size={16} />
+                  <span>Go to Document Library &amp; Upload Document</span>
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="animate-fade-in" style={{ margin: 'auto', maxWidth: '680px', textAlign: 'center', padding: '40px 20px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '18px',
+                  background: 'var(--gradient-brand)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 20px',
+                  boxShadow: '0 0 30px rgba(99, 102, 241, 0.4)'
+                }}>
+                  <Sparkles size={32} color="#ffffff" />
+                </div>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '8px' }}>
+                  Ask your documents anything
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '28px' }}>
+                  Hybrid SOTA dense vector + BM25 retrieval with deep cross-encoder re-ranking and auditable page-level citations.
+                </p>
+
+                {/* Categorized Prompt Suggestions */}
+                {dynamicSuggestions.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.775rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                      <span>Recommended Questions</span>
+                      <span style={{ fontSize: '0.7rem', color: '#818cf8', textTransform: 'none', fontWeight: 500 }}>
+                        Grounding from {documents?.length || 0} active project file{documents?.length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                    {dynamicSuggestions.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSend(item.text)}
+                        className="glass-panel"
+                        style={{
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          border: '1px solid var(--border-subtle)',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div>
+                          <span className="badge badge-indigo" style={{ marginRight: '10px' }}>{item.category}</span>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{item.text}</span>
+                        </div>
+                        <Send size={14} color="#818cf8" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           )}
 
           {/* Conversation Exchange */}
@@ -492,9 +526,10 @@ export default function ChatStudio({ documents, onViewDocument }) {
                   padding: '16px 20px',
                   borderRadius: '16px',
                   background: msg.role === 'user' 
-                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.2))' 
+                    ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover))' 
                     : 'var(--bg-card)',
-                  border: `1px solid ${msg.role === 'user' ? 'rgba(99, 102, 241, 0.4)' : 'var(--border-subtle)'}`,
+                  color: msg.role === 'user' ? '#ffffff' : 'var(--text-primary)',
+                  border: msg.role === 'user' ? '1px solid transparent' : '1px solid var(--border-subtle)',
                   backdropFilter: 'blur(16px)',
                   boxShadow: 'var(--shadow-card)',
                   lineHeight: 1.65,
@@ -504,8 +539,8 @@ export default function ChatStudio({ documents, onViewDocument }) {
               >
                 {/* Agentic Reasoning Trace Accordion */}
                 {msg.agenticActive && msg.reasoningSteps && (
-                  <details style={{ marginBottom: '14px', background: 'rgba(0, 0, 0, 0.3)', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 600, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
+                  <details style={{ marginBottom: '14px', background: 'var(--card-subtle-bg)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
                       <BrainCircuit size={15} />
                       <span>Agentic CRAG Reasoning Trace (Intent: {msg.intentType || 'Factual Lookup'})</span>
                     </summary>
@@ -514,7 +549,7 @@ export default function ChatStudio({ documents, onViewDocument }) {
                         <div style={{ marginBottom: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                             <span>Retrieval Grounding Confidence:</span>
-                            <span style={{ fontWeight: 700, color: '#34d399' }}>{msg.confidenceScore}%</span>
+                            <span style={{ fontWeight: 700, color: 'var(--accent-emerald)' }}>{msg.confidenceScore}%</span>
                           </div>
                           <div style={{ height: '5px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', overflow: 'hidden' }}>
                             <div style={{ width: `${msg.confidenceScore}%`, height: '100%', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
@@ -539,7 +574,7 @@ export default function ChatStudio({ documents, onViewDocument }) {
                 {msg.sources && msg.sources.length > 0 && (
                   <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <BookOpen size={13} color="#22d3ee" />
+                      <BookOpen size={13} color="var(--accent-cyan)" />
                       <span>Verified Auditable Sources ({msg.sources.length})</span>
                     </div>
 
@@ -548,8 +583,8 @@ export default function ChatStudio({ documents, onViewDocument }) {
                         <div 
                           key={srcIdx}
                           style={{
-                            background: 'rgba(15, 23, 42, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: 'var(--card-subtle-bg)',
+                            border: '1px solid var(--border-subtle)',
                             borderRadius: '10px',
                             padding: '10px',
                             display: 'flex',
@@ -558,7 +593,7 @@ export default function ChatStudio({ documents, onViewDocument }) {
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
                               {src.document}
                             </span>
                             <span className="badge badge-indigo" style={{ fontSize: '0.7rem' }}>
@@ -645,8 +680,8 @@ export default function ChatStudio({ documents, onViewDocument }) {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask anything about your uploaded documents..."
-              disabled={isLoading}
+              placeholder={hasDocuments ? "Ask anything about your uploaded documents..." : "Please upload a document in Document Library first..."}
+              disabled={isLoading || !hasDocuments}
               style={{
                 flex: 1,
                 border: 'none',
@@ -655,27 +690,35 @@ export default function ChatStudio({ documents, onViewDocument }) {
                 color: 'var(--text-primary)',
                 fontSize: '0.95rem',
                 outline: 'none',
-                boxShadow: 'none'
+                boxShadow: 'none',
+                opacity: hasDocuments ? 1 : 0.6
               }}
             />
             <button
               type="submit"
-              disabled={isLoading || !inputValue.trim()}
+              disabled={isLoading || !inputValue.trim() || !hasDocuments}
               className="btn btn-primary"
               style={{
                 padding: '9px 18px',
                 borderRadius: '10px',
-                opacity: (!inputValue.trim() || isLoading) ? 0.5 : 1,
-                cursor: (!inputValue.trim() || isLoading) ? 'not-allowed' : 'pointer'
+                opacity: (!inputValue.trim() || isLoading || !hasDocuments) ? 0.45 : 1,
+                cursor: (!inputValue.trim() || isLoading || !hasDocuments) ? 'not-allowed' : 'pointer'
               }}
             >
               <Send size={16} />
               <span>Ask</span>
             </button>
           </form>
-          <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.725rem', color: 'var(--text-dim)' }}>
-            Grounded local RAG • Strict anti-hallucination citations • Privacy-first local execution
-          </div>
+          {!hasDocuments ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '10px', fontSize: '0.75rem', color: '#f59e0b' }}>
+              <AlertCircle size={13} />
+              <span>Document library is empty. Please upload a PDF before asking questions.</span>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.725rem', color: 'var(--text-dim)' }}>
+              Grounded local RAG • Strict anti-hallucination citations • Privacy-first local execution
+            </div>
+          )}
         </div>
 
       </main>

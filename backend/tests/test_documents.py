@@ -115,3 +115,52 @@ def test_analytics_summary(mock_stats, mock_ollama, mock_app_state):
         assert "total_chunks" in data
         assert "embedding_model" in data
         assert "ollama_status" in data
+
+
+@patch("app.api.routes.documents.summarize_page_content")
+def test_get_document_page_summary(mock_summarize, mock_app_state):
+    """Test GET /documents/{name}/page/{num}/summary returns structured AI summary."""
+    mock_summarize.return_value = {
+        "main_topic": "Clinical Trial Findings",
+        "summary": "This page summarizes phase III trial results with high efficacy.",
+        "key_points": [
+            "Primary endpoint reached with statistical significance.",
+            "No severe adverse effects recorded in the control group."
+        ],
+        "model_used": "llama3:8b",
+        "latency_ms": 120.5
+    }
+
+    mock_collection = mock_app_state.state.chroma_collection
+    mock_collection.get.return_value = {
+        "documents": ["Clinical trial overview and statistical efficacy metrics."],
+        "metadatas": [{"document": "medical_report.pdf", "page": 1}]
+    }
+
+    with TestClient(app) as client:
+        response = client.get("/documents/medical_report.pdf/page/1/summary")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["document_name"] == "medical_report.pdf"
+        assert data["page_number"] == 1
+        assert "Clinical Trial Findings" in data["main_topic"]
+        assert len(data["key_points"]) == 2
+        assert "summary" in data
+
+
+@patch("os.path.isfile")
+def test_get_document_preview_pdf(mock_isfile, mock_app_state, tmp_path):
+    """Test GET /documents/{name}/preview_pdf generates real converted PDF for non-PDFs."""
+    mock_isfile.return_value = True
+    fake_pdf = tmp_path / "test_slides.pdf"
+    fake_pdf.write_bytes(b"%PDF-1.4 real converted pdf content")
+
+    with patch("app.services.pdf_converter.convert_file_to_real_pdf") as mock_convert:
+        mock_convert.return_value = str(fake_pdf)
+        with TestClient(app) as client:
+            response = client.get("/documents/test_slides.pptx/preview_pdf")
+            assert response.status_code == 200
+            assert response.headers["content-type"] == "application/pdf"
+            assert response.content.startswith(b"%PDF")
+
+

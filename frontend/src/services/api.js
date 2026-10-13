@@ -76,9 +76,33 @@ export async function fetchDocumentPage(docName, pageNum) {
   return await res.json();
 }
 
+export async function fetchPageSummary(docName, pageNum, forceRefresh = false) {
+  const url = `${API_BASE}/documents/${encodeURIComponent(docName)}/page/${pageNum}/summary${forceRefresh ? '?force_refresh=true' : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Summary failed with HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
 export function getDocumentPdfUrl(docName, pageNum = 1) {
   return `${API_BASE}/documents/${encodeURIComponent(docName)}/file#page=${pageNum}`;
 }
+
+export function getDocumentPreviewPdfUrl(docName, pageNum = 1) {
+  return `${API_BASE}/documents/${encodeURIComponent(docName)}/preview_pdf#page=${pageNum}`;
+}
+
+export function getDocumentImageUrl(docName, pageNum = 1) {
+  return `${API_BASE}/documents/${encodeURIComponent(docName)}/page/${pageNum}/image`;
+}
+
+export function getDocumentDownloadUrl(docName) {
+  return `${API_BASE}/documents/${encodeURIComponent(docName)}/file`;
+}
+
+
 
 export async function fetchAnalytics() {
   try {

@@ -220,7 +220,7 @@ export default function DocumentLibrary({ documents, onRefresh, onViewDocument }
 
             {/* Document Abstract Snippet */}
             {doc.summary_preview && (
-              <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', lineHeight: 1.5, background: 'rgba(0,0,0,0.25)', padding: '8px 12px', borderRadius: '8px' }}>
+              <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', lineHeight: 1.5, background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '8px 12px', borderRadius: '8px' }}>
                 "{doc.summary_preview}"
               </p>
             )}

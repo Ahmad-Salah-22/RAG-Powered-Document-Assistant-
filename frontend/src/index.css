@@ -29,15 +29,251 @@
   --accent-rose: #f43f5e;
 
   --gradient-brand: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);
+  --gradient-title: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
   --gradient-glow: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
 
+  --nav-tab-active-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.15));
+  --nav-tab-active-text: #ffffff;
+  --nav-tab-active-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.5);
+
+  --btn-secondary-bg: rgba(255, 255, 255, 0.05);
+  --btn-secondary-hover: rgba(255, 255, 255, 0.1);
+  --btn-secondary-border: var(--border-subtle);
+  --btn-secondary-text: var(--text-primary);
+
+  --card-subtle-bg: rgba(255, 255, 255, 0.03);
+  --card-subtle-border: var(--border-subtle);
+
+  --badge-indigo-bg: rgba(99, 102, 241, 0.15);
+  --badge-indigo-text: #a5b4fc;
+  --badge-indigo-border: rgba(99, 102, 241, 0.3);
+
+  --badge-cyan-bg: rgba(6, 182, 212, 0.15);
+  --badge-cyan-text: #38bdf8;
+  --badge-cyan-border: rgba(6, 182, 212, 0.3);
+
+  --badge-emerald-bg: rgba(16, 185, 129, 0.15);
+  --badge-emerald-text: #34d399;
+  --badge-emerald-border: rgba(16, 185, 129, 0.3);
+
+  --badge-amber-bg: rgba(245, 158, 11, 0.15);
+  --badge-amber-text: #fbbf24;
+  --badge-amber-border: rgba(245, 158, 11, 0.3);
+
+  --badge-rose-bg: rgba(244, 63, 94, 0.15);
+  --badge-rose-text: #fb7185;
+  --badge-rose-border: rgba(244, 63, 94, 0.3);
+
+  --bg-pattern: 
+    radial-gradient(ellipse 70% 45% at 50% -10%, rgba(99, 102, 241, 0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 40%, rgba(6, 182, 212, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 10% 70%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 28px 28px;
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+}
+
+/* ========================================================
+   THEME PALETTES
+   ======================================================== */
+
+/* THEME 2: CYBERPUNK NEON */
+[data-theme="cyberpunk"] {
+  --bg-app: #090414;
+  --bg-sidebar: #0f0722;
+  --bg-card: rgba(24, 12, 48, 0.78);
+  --bg-card-hover: rgba(36, 18, 72, 0.88);
+  --bg-input: rgba(18, 8, 36, 0.9);
+  --bg-glass-elevated: rgba(38, 16, 75, 0.65);
+  --border-subtle: rgba(236, 72, 153, 0.12);
+  --border-medium: rgba(236, 72, 153, 0.22);
+  --border-glow: rgba(236, 72, 153, 0.5);
+  --border-cyan-glow: rgba(168, 85, 247, 0.45);
+  --accent-primary: #ec4899;
+  --accent-primary-hover: #db2777;
+  --accent-purple: #c084fc;
+  --gradient-brand: linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #3b82f6 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.18) 0%, transparent 70%);
+  --shadow-glow: 0 0 25px rgba(236, 72, 153, 0.3);
+  --bg-pattern: 
+    radial-gradient(ellipse 75% 50% at 50% -10%, rgba(236, 72, 153, 0.28) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 90% 45%, rgba(168, 85, 247, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 10% 75%, rgba(6, 182, 212, 0.16) 0%, transparent 60%),
+    linear-gradient(rgba(236, 72, 153, 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(236, 72, 153, 0.04) 1px, transparent 1px) 0 0 / 32px 32px;
+}
+
+/* THEME 3: EMERALD MATRIX */
+[data-theme="emerald"] {
+  --bg-app: #030f0c;
+  --bg-sidebar: #061713;
+  --bg-card: rgba(8, 30, 24, 0.78);
+  --bg-card-hover: rgba(12, 42, 34, 0.88);
+  --bg-input: rgba(6, 22, 18, 0.9);
+  --bg-glass-elevated: rgba(10, 48, 38, 0.65);
+  --border-subtle: rgba(16, 185, 129, 0.12);
+  --border-medium: rgba(16, 185, 129, 0.22);
+  --border-glow: rgba(16, 185, 129, 0.5);
+  --border-cyan-glow: rgba(52, 211, 153, 0.45);
+  --accent-primary: #10b981;
+  --accent-primary-hover: #059669;
+  --accent-cyan: #34d399;
+  --gradient-brand: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+  --shadow-glow: 0 0 25px rgba(16, 185, 129, 0.3);
+  --bg-pattern: 
+    radial-gradient(ellipse 75% 50% at 50% -10%, rgba(16, 185, 129, 0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 90% 50%, rgba(6, 182, 212, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 10% 70%, rgba(52, 211, 153, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 1px, transparent 1px) 0 0 / 28px 28px;
+}
+
+/* THEME 4: OCEANIC ABYSS */
+[data-theme="ocean"] {
+  --bg-app: #040b17;
+  --bg-sidebar: #071326;
+  --bg-card: rgba(10, 26, 48, 0.78);
+  --bg-card-hover: rgba(15, 36, 68, 0.88);
+  --bg-input: rgba(6, 18, 34, 0.9);
+  --bg-glass-elevated: rgba(14, 42, 80, 0.65);
+  --border-subtle: rgba(6, 182, 212, 0.12);
+  --border-medium: rgba(6, 182, 212, 0.22);
+  --border-glow: rgba(6, 182, 212, 0.5);
+  --border-cyan-glow: rgba(56, 189, 248, 0.45);
+  --accent-primary: #06b6d4;
+  --accent-primary-hover: #0891b2;
+  --gradient-brand: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.18) 0%, transparent 70%);
+  --shadow-glow: 0 0 25px rgba(6, 182, 212, 0.3);
+  --bg-pattern: 
+    radial-gradient(ellipse 75% 50% at 50% -10%, rgba(6, 182, 212, 0.26) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 45% at 90% 45%, rgba(59, 130, 246, 0.20) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 10% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 1px, transparent 1px) 0 0 / 28px 28px;
+}
+
+/* THEME 5: SOLAR EMBER */
+[data-theme="sunset"] {
+  --bg-app: #120805;
+  --bg-sidebar: #1b0d09;
+  --bg-card: rgba(36, 18, 12, 0.78);
+  --bg-card-hover: rgba(50, 24, 16, 0.88);
+  --bg-input: rgba(26, 12, 8, 0.9);
+  --bg-glass-elevated: rgba(60, 28, 18, 0.65);
+  --border-subtle: rgba(245, 158, 11, 0.12);
+  --border-medium: rgba(245, 158, 11, 0.22);
+  --border-glow: rgba(245, 158, 11, 0.5);
+  --border-cyan-glow: rgba(234, 88, 12, 0.45);
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #d97706;
+  --gradient-brand: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.18) 0%, transparent 70%);
+  --shadow-glow: 0 0 25px rgba(245, 158, 11, 0.3);
+  --bg-pattern: 
+    radial-gradient(ellipse 75% 50% at 50% -10%, rgba(245, 158, 11, 0.24) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 85% 50%, rgba(234, 88, 12, 0.20) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 15% 75%, rgba(225, 29, 72, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 1px, transparent 1px) 0 0 / 28px 28px;
+}
+
+/* THEME 6: OBSIDIAN STEALTH (OLED) */
+[data-theme="obsidian"] {
+  --bg-app: #000000;
+  --bg-sidebar: #09090b;
+  --bg-card: rgba(18, 18, 22, 0.85);
+  --bg-card-hover: rgba(28, 28, 34, 0.95);
+  --bg-input: rgba(12, 12, 15, 0.95);
+  --bg-glass-elevated: rgba(30, 30, 36, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.18);
+  --border-glow: rgba(161, 161, 170, 0.5);
+  --border-cyan-glow: rgba(212, 212, 216, 0.45);
+  --accent-primary: #a1a1aa;
+  --accent-primary-hover: #71717a;
+  --gradient-brand: linear-gradient(135deg, #f4f4f5 0%, #a1a1aa 50%, #71717a 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  --shadow-glow: 0 0 25px rgba(255, 255, 255, 0.12);
+  --bg-pattern: 
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 70%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 24px 24px;
+}
+
+/* THEME 7: NORDIC FROST (MODERN LIGHT MODE) */
+[data-theme="nordic"] {
+  --bg-app: #f8fafc;
+  --bg-sidebar: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-glass-elevated: #ffffff;
+  --border-subtle: rgba(0, 0, 0, 0.09);
+  --border-medium: rgba(0, 0, 0, 0.16);
+  --border-glow: rgba(79, 70, 229, 0.45);
+  --border-cyan-glow: rgba(2, 132, 199, 0.4);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  --accent-primary: #4f46e5;
+  --accent-primary-hover: #4338ca;
+  --accent-cyan: #0284c7;
+  --accent-purple: #7c3aed;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+
+  --gradient-brand: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0284c7 100%);
+  --gradient-title: linear-gradient(135deg, #0f172a 30%, #4338ca 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.10) 0%, transparent 70%);
+
+  --nav-tab-active-bg: #4f46e5;
+  --nav-tab-active-text: #ffffff;
+  --nav-tab-active-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-hover: #f1f5f9;
+  --btn-secondary-border: rgba(0, 0, 0, 0.14);
+  --btn-secondary-text: #0f172a;
+
+  --card-subtle-bg: #f8fafc;
+  --card-subtle-border: rgba(0, 0, 0, 0.08);
+
+  --badge-indigo-bg: rgba(79, 70, 229, 0.1);
+  --badge-indigo-text: #4338ca;
+  --badge-indigo-border: rgba(79, 70, 229, 0.25);
+
+  --badge-cyan-bg: rgba(2, 132, 199, 0.1);
+  --badge-cyan-text: #0284c7;
+  --badge-cyan-border: rgba(2, 132, 199, 0.25);
+
+  --badge-emerald-bg: rgba(5, 150, 105, 0.1);
+  --badge-emerald-text: #059669;
+  --badge-emerald-border: rgba(5, 150, 105, 0.25);
+
+  --badge-amber-bg: rgba(217, 119, 6, 0.1);
+  --badge-amber-text: #b45309;
+  --badge-amber-border: rgba(217, 119, 6, 0.25);
+
+  --badge-rose-bg: rgba(225, 29, 72, 0.1);
+  --badge-rose-text: #e11d48;
+  --badge-rose-border: rgba(225, 29, 72, 0.25);
+
+  --shadow-glass: 0 8px 30px 0 rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 2px 12px -1px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.18);
+
+  --bg-pattern: 
+    radial-gradient(ellipse 75% 50% at 50% -10%, rgba(79, 70, 229, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.04) 1px, transparent 1px) 0 0 / 24px 24px;
 }
 
 * {
@@ -54,11 +290,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
+  background-image: var(--bg-pattern);
+  background-attachment: fixed;
   min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
+
 
 /* Scrollbars */
 ::-webkit-scrollbar {
@@ -137,13 +374,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-  border-color: var(--border-subtle);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--btn-secondary-hover);
   border-color: var(--border-medium);
 }
 
@@ -181,7 +418,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-icon:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--btn-secondary-hover);
 }
 
 /* Badges & Pills */
@@ -197,33 +434,33 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .badge-indigo {
-  background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: var(--badge-indigo-bg);
+  color: var(--badge-indigo-text);
+  border: 1px solid var(--badge-indigo-border);
 }
 
 .badge-cyan {
-  background: rgba(6, 182, 212, 0.15);
-  color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  background: var(--badge-cyan-bg);
+  color: var(--badge-cyan-text);
+  border: 1px solid var(--badge-cyan-border);
 }
 
 .badge-emerald {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--badge-emerald-bg);
+  color: var(--badge-emerald-text);
+  border: 1px solid var(--badge-emerald-border);
 }
 
 .badge-amber {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+  border: 1px solid var(--badge-amber-border);
 }
 
 .badge-rose {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: var(--badge-rose-bg);
+  color: var(--badge-rose-text);
+  border: 1px solid var(--badge-rose-border);
 }
 
 /* Inputs & Form Elements */
@@ -255,13 +492,13 @@ code, pre {
 }
 
 pre {
-  background: rgba(8, 11, 18, 0.95);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 14px;
   overflow-x: auto;
   font-size: 0.85rem;
-  color: #e2e8f0;
+  color: var(--text-primary);
 }
 
 code {

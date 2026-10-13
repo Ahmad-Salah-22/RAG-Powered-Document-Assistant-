@@ -5,7 +5,7 @@ import { submitComparison } from '../services/api';
 export default function ComparisonMatrix({ documents, onViewDocument }) {
   const [docA, setDocA] = useState(documents[0]?.document_name || '');
   const [docB, setDocB] = useState(documents[1]?.document_name || documents[0]?.document_name || '');
-  const [topic, setTopic] = useState('Core concepts, algorithms, performance complexity trade-offs, and practical use cases');
+  const [topic, setTopic] = useState('Core concepts, methodologies, key findings, and practical implications');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -131,7 +131,7 @@ export default function ComparisonMatrix({ documents, onViewDocument }) {
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {result.sources_a?.map((s, idx) => (
-                  <div key={idx} style={{ background: 'rgba(0,0,0,0.25)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}>
+                  <div key={idx} style={{ background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span className="badge badge-indigo">Page {s.page}</span>
                       <button onClick={() => onViewDocument(s.document, s.page)} className="btn btn-secondary btn-sm" style={{ padding: '2px 6px', fontSize: '0.675rem' }}>
@@ -152,7 +152,7 @@ export default function ComparisonMatrix({ documents, onViewDocument }) {
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {result.sources_b?.map((s, idx) => (
-                  <div key={idx} style={{ background: 'rgba(0,0,0,0.25)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}>
+                  <div key={idx} style={{ background: 'var(--card-subtle-bg)', border: '1px solid var(--border-subtle)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span className="badge badge-cyan">Page {s.page}</span>
                       <button onClick={() => onViewDocument(s.document, s.page)} className="btn btn-secondary btn-sm" style={{ padding: '2px 6px', fontSize: '0.675rem' }}>
