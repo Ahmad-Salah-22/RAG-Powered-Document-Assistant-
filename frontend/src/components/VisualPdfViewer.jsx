@@ -34,12 +34,18 @@ export default function VisualPdfViewer({ documents, initialDoc, initialPage }) 
     setIsLoading(true);
     try {
       const data = await fetchDocumentPage(docName, pageNum);
-      setPageData(data);
+      const text = data.text_content || data.text || '';
+      setPageData({
+        ...data,
+        text,
+        text_content: text
+      });
     } catch (err) {
       setPageData({
         document: docName,
         page: pageNum,
         text: `Error loading page text: ${err.message}`,
+        text_content: '',
         total_pages: 1
       });
     } finally {
@@ -179,9 +185,9 @@ export default function VisualPdfViewer({ documents, initialDoc, initialPage }) 
                 Verified Extracted Page Text
               </h3>
             </div>
-            {pageData?.text && (
+            {(pageData?.text_content || pageData?.text) && (
               <span className="badge badge-indigo">
-                {pageData.text.length} characters
+                {(pageData.text_content || pageData.text).length} characters
               </span>
             )}
           </div>
@@ -190,7 +196,7 @@ export default function VisualPdfViewer({ documents, initialDoc, initialPage }) 
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
               Loading extracted text for Page {currentPage}...
             </div>
-          ) : pageData?.text ? (
+          ) : (pageData?.text_content || pageData?.text) ? (
             <div 
               className="glass-panel" 
               style={{
@@ -202,7 +208,7 @@ export default function VisualPdfViewer({ documents, initialDoc, initialPage }) 
                 background: 'rgba(15, 23, 42, 0.5)'
               }}
             >
-              {renderHighlightedText(pageData.text, searchHighlight)}
+              {renderHighlightedText(pageData.text_content || pageData.text, searchHighlight)}
             </div>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
