@@ -83,16 +83,17 @@ export default function DocumentLibrary({ documents, onRefresh, onViewDocument }
   );
 
   return (
-    <div style={{ padding: '32px 48px', height: 'calc(100vh - 68px)', overflowY: 'auto' }}>
-      
-      {/* Title & Stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Document Corpus Library</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Unified multimodal knowledge base indexed into persistent ChromaDB collections.
-          </p>
-        </div>
+    <div className="page-container" style={{ padding: '36px 24px 64px' }}>
+      <div className="page-content-wrapper-wide">
+        
+        {/* Title & Stats */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '4px' }}>Document Corpus Library</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              Unified multimodal knowledge base indexed into persistent ChromaDB collections.
+            </p>
+          </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div className="glass-panel" style={{ padding: '10px 18px', textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{documents.length}</div>
@@ -279,6 +280,7 @@ export default function DocumentLibrary({ documents, onRefresh, onViewDocument }
         )}
       </div>
 
+      </div>
     </div>
   );
 }

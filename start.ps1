@@ -20,7 +20,7 @@ Start-Sleep -Seconds 2
 
 # 3. Start Vite Frontend
 Write-Host "[3/3] Starting React frontend dev server on http://localhost:3000..." -ForegroundColor Yellow
-$frontendCmd = "Set-Location '$rootDir\frontend'; npm run dev"
+$frontendCmd = "Set-Location '$rootDir\frontend'; npm.cmd run dev"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 
 Write-Host ""

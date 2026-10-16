@@ -387,7 +387,8 @@ export default function ChatStudio({ documents, onViewDocument, onNavigateToLibr
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
         
         {/* Messages Scroll Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ maxWidth: '880px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
           
           {/* Welcome Screen & Prompt Library if no messages */}
           {activeSession.messages.length === 0 && (
@@ -655,6 +656,7 @@ export default function ChatStudio({ documents, onViewDocument, onNavigateToLibr
           )}
 
           <div ref={messagesEndRef} />
+          </div>
         </div>
 
         {/* Input Bar */}
@@ -663,62 +665,64 @@ export default function ChatStudio({ documents, onViewDocument, onNavigateToLibr
           background: 'linear-gradient(to top, var(--bg-app) 80%, transparent)',
           borderTop: '1px solid var(--border-subtle)'
         }}>
-          <form 
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-medium)',
-              borderRadius: '14px',
-              padding: '6px 8px 6px 16px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
-              transition: 'border-color 0.2s ease'
-            }}
-          >
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder={hasDocuments ? "Ask anything about your uploaded documents..." : "Please upload a document in Document Library first..."}
-              disabled={isLoading || !hasDocuments}
+          <div style={{ maxWidth: '880px', width: '100%', margin: '0 auto' }}>
+            <form 
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               style={{
-                flex: 1,
-                border: 'none',
-                background: 'transparent',
-                padding: '8px 0',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                outline: 'none',
-                boxShadow: 'none',
-                opacity: hasDocuments ? 1 : 0.6
-              }}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !inputValue.trim() || !hasDocuments}
-              className="btn btn-primary"
-              style={{
-                padding: '9px 18px',
-                borderRadius: '10px',
-                opacity: (!inputValue.trim() || isLoading || !hasDocuments) ? 0.45 : 1,
-                cursor: (!inputValue.trim() || isLoading || !hasDocuments) ? 'not-allowed' : 'pointer'
+                display: 'flex',
+                alignItems: 'center',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-medium)',
+                borderRadius: '14px',
+                padding: '6px 8px 6px 16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+                transition: 'border-color 0.2s ease'
               }}
             >
-              <Send size={16} />
-              <span>Ask</span>
-            </button>
-          </form>
-          {!hasDocuments ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '10px', fontSize: '0.75rem', color: '#f59e0b' }}>
-              <AlertCircle size={13} />
-              <span>Document library is empty. Please upload a PDF before asking questions.</span>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.725rem', color: 'var(--text-dim)' }}>
-              Grounded local RAG • Strict anti-hallucination citations • Privacy-first local execution
-            </div>
-          )}
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={hasDocuments ? "Ask anything about your uploaded documents..." : "Please upload a document in Document Library first..."}
+                disabled={isLoading || !hasDocuments}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '8px 0',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  opacity: hasDocuments ? 1 : 0.6
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !inputValue.trim() || !hasDocuments}
+                className="btn btn-primary"
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  opacity: (!inputValue.trim() || isLoading || !hasDocuments) ? 0.45 : 1,
+                  cursor: (!inputValue.trim() || isLoading || !hasDocuments) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <Send size={16} />
+                <span>Ask</span>
+              </button>
+            </form>
+            {!hasDocuments ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '10px', fontSize: '0.75rem', color: '#f59e0b' }}>
+                <AlertCircle size={13} />
+                <span>Document library is empty. Please upload a PDF before asking questions.</span>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.725rem', color: 'var(--text-dim)' }}>
+                Grounded local RAG • Strict anti-hallucination citations • Privacy-first local execution
+              </div>
+            )}
+          </div>
         </div>
 
       </main>

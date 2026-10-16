@@ -24,15 +24,18 @@ export default function AnalyticsView() {
   const polygonPoints = `${pTop.x},${pTop.y} ${pRight.x},${pRight.y} ${pBottom.x},${pBottom.y} ${pLeft.x},${pLeft.y}`;
 
   return (
-    <div style={{ padding: '32px 48px', height: 'calc(100vh - 68px)', overflowY: 'auto' }}>
-      
-      {/* Title */}
-      <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Empirical Evaluation &amp; Ragas Triad Benchmarks</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          Standardized benchmark suite measuring Hallucination Resistance, Faithfulness, Relevance, and Context Retrieval Precision.
-        </p>
-      </div>
+    <div className="page-container" style={{ padding: '36px 24px 64px' }}>
+      <div className="page-content-wrapper">
+        
+        {/* Title */}
+        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+            Empirical Evaluation &amp; Ragas Triad Benchmarks
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '680px', margin: '0 auto', lineHeight: 1.55 }}>
+            Standardized benchmark suite measuring Hallucination Resistance, Faithfulness, Relevance, and Context Retrieval Precision.
+          </p>
+        </div>
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
@@ -150,6 +153,7 @@ export default function AnalyticsView() {
 
       </div>
 
+      </div>
     </div>
   );
 }
